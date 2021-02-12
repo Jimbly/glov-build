@@ -160,4 +160,4 @@ gb.task({
   deps: ['concat', 'copy', 'concat-reverse', 'atlas'],
 });
 
-gb.go();
+gb.go('copy');
