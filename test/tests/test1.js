@@ -4,7 +4,8 @@ const gb = require('../../');
 const path = require('path');
 
 gb.configure({
-  root: path.join(__dirname, '../data'),
+  source: path.join(__dirname, '../data'),
+  statedir: path.join(__dirname, '../out/test1/.gbstate'),
   targets: {
     dev: path.join(__dirname, '../out/test1/dev'),
   },
@@ -17,15 +18,15 @@ function copy(job, done) {
 
 function reverse(job, done) {
   let file = job.getFile();
-  let buffer = Buffer.from(file.buffer);
+  let buffer = Buffer.from(file.contents);
   for (let ii = 0; ii < buffer.length / 2; ++ii) {
     let t = buffer[ii];
     buffer[ii] = buffer[buffer.length - 1 - ii];
     buffer[buffer.length - 1 - ii] = t;
   }
   job.out({
-    name: file.name,
-    buffer,
+    path: file.path,
+    contents: buffer,
   });
   done();
 }
@@ -33,17 +34,17 @@ function reverse(job, done) {
 function concatSimple(opts) {
   return function (job, done) {
     let files = job.getFiles();
-    let buffer = Buffer.concat(files.map((f) => f.buffer));
+    let buffer = Buffer.concat(files.map((f) => f.contents));
     job.out({
-      name: opts.output,
-      buffer,
+      path: opts.output,
+      contents: buffer,
     });
     done();
   };
 }
 
 function cmpName(a, b) {
-  return a.name < b.name ? -1 : 1;
+  return a.path < b.path ? -1 : 1;
 }
 
 function concatCachedInternal(opts, job, done) {
@@ -52,21 +53,24 @@ function concatCachedInternal(opts, job, done) {
   let user_data = job.getUserData();
   user_data.files = user_data.files || {};
   for (let ii = 0; ii < deleted_files.length; ++ii) {
-    delete user_data.files[deleted_files[ii].name];
+    delete user_data.files[deleted_files[ii].path];
   }
 
   for (let ii = 0; ii < updated_files.length; ++ii) {
     let f = updated_files[ii];
-    user_data.files[f.name] = f;
+    if (opts.skip === f.path) {
+      continue;
+    }
+    user_data.files[f.path] = f;
   }
   let files = Object.values(user_data.files).sort(cmpName);
 
   // Note: above is equivalent to `let files = job.getFiles()`, since we're not actually caching anything
 
-  let buffer = Buffer.concat(files.map((f) => f.buffer));
+  let buffer = Buffer.concat(files.map((f) => f.contents));
   job.out({
-    name: opts.output,
-    buffer,
+    path: opts.output,
+    contents: buffer,
   });
   done();
 }
@@ -82,9 +86,9 @@ function atlas(job, done) {
     job.depReset();
 
     try {
-      input_data = JSON.parse(input.buffer);
+      input_data = JSON.parse(input.contents);
     } catch (e) {
-      return done(`Error parsing ${input.name}: ${e}`);
+      return done(`Error parsing ${input.path}: ${e}`);
     }
 
     let { output, inputs } = input_data;
@@ -94,7 +98,7 @@ function atlas(job, done) {
     if (!inputs || !inputs.length) {
       return done('Missing or empty `inputs` field');
     }
-    input.getUserData().data = input_data;
+    job.getUserData().atlas_data = input_data;
 
     async.each(inputs, (name, next) => {
       job.depAdd(name, next);
@@ -102,11 +106,11 @@ function atlas(job, done) {
       if (err) {
         return done(err);
       }
-      concatCachedInternal({ output: input_data.output }, job, done);
+      concatCachedInternal({ output: input_data.output, skip: input.path }, job, done);
     });
   } else {
     // only a dep has changed
-    input_data = input.getUserData().data;
+    input_data = job.getUserData().atlas_data;
 
     // input did not change, no changes which files we depend on
     concatCachedInternal({ output: input_data.output }, job, done);
@@ -160,4 +164,4 @@ gb.task({
   deps: ['concat', 'copy', 'concat-reverse', 'atlas'],
 });
 
-gb.go('copy');
+gb.go(['default']);

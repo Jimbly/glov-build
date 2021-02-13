@@ -351,7 +351,7 @@ module.exports = {
       "error",
       {
         "classes": true,
-        "functions": true,
+        "functions": false,
         "variables": true
       }
     ],
