@@ -145,7 +145,7 @@ gb.task({
 
 gb.task({
   name: 'concat-reverse',
-  input: 'reverse:*',
+  input: 'reverse:**',
   type: gb.ALL,
   target: 'dev',
   func: concatCached({ output: 'concat-reverse.txt' }),
