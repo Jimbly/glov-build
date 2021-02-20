@@ -1,3 +1,4 @@
+const assert = require('assert');
 const async = require('async');
 // const gb = require('glovjs-build');
 const gb = require('../../');
@@ -119,6 +120,25 @@ function atlas(job, done) {
   }
 }
 
+function warnOn(file) {
+  return function (job, done) {
+    if (job.getFile().path === file) {
+      job.warn(`(expected warning on ${file})`);
+    }
+    done();
+  };
+}
+
+function errorOn(file) {
+  return function (job, done) {
+    if (job.getFile().path === file) {
+      // done(err) should also do the same
+      job.error(`(expected error on ${file})`);
+    }
+    done();
+  };
+}
+
 gb.task({
   name: 'copy',
   input: 'txt/*.txt',
@@ -162,19 +182,58 @@ gb.task({
 });
 
 gb.task({
+  name: 'warns',
+  input: 'txt/*.txt',
+  type: gb.SINGLE,
+  func: warnOn('txt/file2.txt'),
+});
+
+let did_run = false;
+gb.task({
+  name: 'does_run',
+  input: 'txt/*.txt',
+  type: gb.ALL,
+  func: (job, done) => {
+    did_run = true;
+    done();
+  },
+  deps: ['warns'],
+});
+
+gb.task({
+  name: 'errors',
+  input: 'txt/*.txt',
+  type: gb.SINGLE,
+  func: errorOn('txt/file1.txt'),
+});
+
+gb.task({
+  name: 'never_runs',
+  input: 'txt/*.txt',
+  type: gb.SINGLE,
+  func: () => assert(false),
+  deps: ['errors'],
+});
+
+
+gb.task({
   name: 'default',
-  deps: ['concat', 'copy', 'concat-reverse', 'atlas'],
+  deps: ['concat', 'copy', 'concat-reverse', 'atlas', 'never_runs', 'does_run'],
 });
 
 gb.go(['default']);
 
-gb.once('done', function () {
-  const assert = require('assert'); // eslint-disable-line global-require
+gb.once('done', function (err) {
   const fs = require('fs'); // eslint-disable-line global-require
   console.log('Build complete! Checking...');
   function check(target, file, contents) {
     assert.equal(fs.readFileSync(path.join(targets[target], file), 'utf8'), contents);
   }
+  if (err) {
+    assert(process.exitCode);
+    process.exitCode = 0;
+  }
+  assert(did_run);
   check('dev', 'concat.txt', 'ascii1file1file2');
   check('dev', 'concat-reverse.txt', '1elif2elif');
   check('dev', 'my_atlas.txt', 'file1file2');
