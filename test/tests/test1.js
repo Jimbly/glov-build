@@ -3,12 +3,14 @@ const async = require('async');
 const gb = require('../../');
 const path = require('path');
 
+const targets = {
+  dev: path.join(__dirname, '../out/test1/dev'),
+};
+
 gb.configure({
   source: path.join(__dirname, '../data'),
   statedir: path.join(__dirname, '../out/test1/.gbstate'),
-  targets: {
-    dev: path.join(__dirname, '../out/test1/dev'),
-  },
+  targets,
 });
 
 function copy(job, done) {
@@ -165,3 +167,19 @@ gb.task({
 });
 
 gb.go(['default']);
+
+gb.once('done', function () {
+  const assert = require('assert'); // eslint-disable-line global-require
+  const fs = require('fs'); // eslint-disable-line global-require
+  console.log('Build complete! Checking...');
+  function check(target, file, contents) {
+    assert.equal(fs.readFileSync(path.join(targets[target], file), 'utf8'), contents);
+  }
+  check('dev', 'concat.txt', 'ascii1file1file2');
+  check('dev', 'concat-reverse.txt', '1elif2elif');
+  check('dev', 'my_atlas.txt', 'file1file2');
+  check('dev', 'txt/file1.txt', 'file1');
+  check('dev', 'txt/file2.txt', 'file2');
+  // TODO: Better checking that checks for an orphans removed, etc
+  // TODO: encapsulate source files into this test so it writes a clean set of files, runs build, checks results
+});
