@@ -3,3 +3,4 @@ npm-debug.log
 *.sublime-workspace
 .DS_Store
 test/out/
+test/work/
