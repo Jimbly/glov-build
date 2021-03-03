@@ -14,11 +14,18 @@ function testLog(name, str) {
   console.log(chalk.cyan.bold(`TEST(${name}): ${str}`));
 }
 function testClean(next) {
-  testLog('clean', `Cleaning ${WORK_DIR} and ${STATE_DIR}...`);
-  async.series([
-    rimraf.bind(null, WORK_DIR),
-    rimraf.bind(null, STATE_DIR),
-  ], next);
+  function clean(dir, next) {
+    testLog('clean', `Cleaning ${dir}...`);
+    rimraf(dir, next);
+  }
+  let tasks = [
+    clean.bind(null, WORK_DIR),
+    clean.bind(null, STATE_DIR),
+  ];
+  for (let key in targets) {
+    tasks.push(clean.bind(null, targets[key]));
+  }
+  async.series(tasks, next);
 }
 
 function testUpdateFS(name, ops) {
@@ -80,7 +87,7 @@ function test(opts, next) {
       }
       for (let key in target_output) {
         if (!found_keys[key]) {
-          assert(target_output[key], `Missing expected ${target}:${key}`);
+          assert(false, `Missing expected ${target}:${key}`);
         }
       }
     }
@@ -139,7 +146,7 @@ async.series([
       dev: {
         'concat.txt': 'ascii1file2',
         'concat-reverse.txt': '2elif',
-        'my_atlas.txt': 'file1file2', // unchanged with error
+        // 'my_atlas.txt': 'file1file2', // pruned with error; good idea?
         // 'txt/file1.txt': 'file1', // pruned
         'txt/file2.txt': 'file2',
       },
@@ -171,6 +178,59 @@ async.series([
     expect_error: false,
     jobs: 1,
   }),
+  test.bind(null, {
+    name: 'multiout (2)',
+    tasklist: ['multiout'],
+    ops: {
+      add: {
+        'multi/multi1.json':
+`{
+  "outputs": {
+    "multi1-a.txt": "m1a",
+    "multi1-b.txt": "m1b"
+  }
+}`,
+      }
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'ascii1file2',
+        'concat-reverse.txt': '2elif',
+        'my_atlas.txt': 'file2',
+        'txt/file2.txt': 'file2',
+        'multi1-a.txt': 'm1a',
+        'multi1-b.txt': 'm1b',
+      },
+    },
+    expect_error: false,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'multiout (1)',
+    tasklist: ['multiout'],
+    ops: {
+      add: {
+        'multi/multi1.json':
+`{
+  "outputs": {
+    "multi1-a.txt": "m1a"
+  }
+}`,
+      }
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'ascii1file2',
+        'concat-reverse.txt': '2elif',
+        'my_atlas.txt': 'file2',
+        'txt/file2.txt': 'file2',
+        'multi1-a.txt': 'm1a'
+      },
+    },
+    expect_error: false,
+    jobs: 1,
+  }),
+
 ], function (err) {
   if (err) {
     throw err;

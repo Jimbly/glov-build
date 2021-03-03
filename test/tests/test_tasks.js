@@ -126,6 +126,29 @@ function atlas(job, done) {
   }
 }
 
+function multiout(job, done) {
+  let input = job.getFile();
+  let input_data;
+  try {
+    input_data = JSON.parse(input.contents);
+  } catch (e) {
+    return done(`Error parsing ${input.path}: ${e}`);
+  }
+
+  let { outputs } = input_data;
+  if (!outputs) {
+    return done('Missing `output` field');
+  }
+
+  for (let key in outputs) {
+    job.out({
+      path: key,
+      contents: outputs[key],
+    });
+  }
+  done();
+}
+
 function warnOn(file) {
   return function (job, done) {
     if (job.getFile().path === file) {
@@ -185,6 +208,14 @@ gb.task({
   type: gb.SINGLE,
   target: 'dev',
   func: atlas,
+});
+
+gb.task({
+  name: 'multiout',
+  input: 'multi/*.json',
+  type: gb.SINGLE,
+  target: 'dev',
+  func: multiout,
 });
 
 gb.task({
