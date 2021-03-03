@@ -7,6 +7,7 @@ const gb = require('../../');
 const path = require('path');
 const rimraf = require('rimraf');
 const readdirRecursive = require('recursive-readdir-synchronous');
+const { forwardSlashes } = require('../../lib/util.js');
 
 const { targets, STATE_DIR, WORK_DIR, didRun } = require('./test_tasks.js');
 
@@ -78,8 +79,8 @@ function test(opts, next) {
       let target_dir = targets[target];
       let files = readdirRecursive(target_dir);
       for (let ii = 0; ii < files.length; ++ii) {
-        let full_path = files[ii].replace(/\\/g, '/');
-        let key = path.relative(target_dir, full_path).replace(/\\/g, '/');
+        let full_path = forwardSlashes(files[ii]);
+        let key = forwardSlashes(path.relative(target_dir, full_path));
         assert(target_output[key], `Found unexpected ${target}:${key}`);
         let found = fs.readFileSync(full_path, 'utf8');
         assert.equal(found, target_output[key], `Mismatched data in ${target}:${key}`);
@@ -180,7 +181,7 @@ async.series([
   }),
   test.bind(null, {
     name: 'multiout (2)',
-    tasklist: ['multiout'],
+    tasklist: ['clean', 'multiout'],
     ops: {
       add: {
         'multi/multi1.json':
@@ -194,10 +195,6 @@ async.series([
     },
     outputs: {
       dev: {
-        'concat.txt': 'ascii1file2',
-        'concat-reverse.txt': '2elif',
-        'my_atlas.txt': 'file2',
-        'txt/file2.txt': 'file2',
         'multi1-a.txt': 'm1a',
         'multi1-b.txt': 'm1b',
       },
@@ -220,11 +217,7 @@ async.series([
     },
     outputs: {
       dev: {
-        'concat.txt': 'ascii1file2',
-        'concat-reverse.txt': '2elif',
-        'my_atlas.txt': 'file2',
-        'txt/file2.txt': 'file2',
-        'multi1-a.txt': 'm1a'
+        'multi1-a.txt': 'm1a',
       },
     },
     expect_error: false,

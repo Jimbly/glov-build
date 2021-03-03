@@ -13,7 +13,8 @@
     "chalk": "^4.1.0",
     "fast-glob": "^3.2.5",
     "micromatch": "^4.0.2",
-    "minimist": "^1.2.5"
+    "minimist": "^1.2.5",
+    "recursive-readdir": "^2.2.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.7",

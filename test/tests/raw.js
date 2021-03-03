@@ -2,4 +2,4 @@
 const gb = require('../../');
 
 require('./test_tasks.js');
-gb.go(['reverse']);
+gb.go(['clean']);
