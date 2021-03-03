@@ -52,8 +52,8 @@ function testUpdateFS(name, ops) {
 }
 
 function test(opts, next) {
-  let { tasklist, ops, outputs, name, checks, expect_error, jobs } = opts;
-  testUpdateFS(name, ops);
+  let { tasklist, ops, outputs, name, checks, warnings, errors, jobs } = opts;
+  testUpdateFS(name, ops || {});
   gb.go(tasklist);
 
   gb.once('done', function (err) {
@@ -62,7 +62,10 @@ function test(opts, next) {
       assert(process.exitCode);
       process.exitCode = 0;
     }
-    if (expect_error) {
+    assert.equal(gb.stats.jobs, jobs || 0, 'Unexpected number of jobs ran');
+    assert.equal(gb.stats.errors, errors || 0, 'Unexpected number of errors');
+    assert.equal(gb.stats.warnings, warnings || 0, 'Unexpected number of warnings');
+    if (errors) {
       assert(err, 'Expected build to end in error');
     } else {
       assert(!err, 'Expected build to end without error');
@@ -74,10 +77,10 @@ function test(opts, next) {
     }
 
     for (let target in targets) {
-      let target_output = outputs[target];
+      let target_output = (outputs || {})[target] || {};
       let found_keys = {};
       let target_dir = targets[target];
-      let files = readdirRecursive(target_dir);
+      let files = fs.existsSync(target_dir) ? readdirRecursive(target_dir) : [];
       for (let ii = 0; ii < files.length; ++ii) {
         let full_path = forwardSlashes(files[ii]);
         let key = forwardSlashes(path.relative(target_dir, full_path));
@@ -92,7 +95,6 @@ function test(opts, next) {
         }
       }
     }
-    assert.equal(gb.stats.jobs, jobs, 'Unexpected number of jobs ran');
     testLog(name, 'Success');
     gb.stop();
     next();
@@ -132,7 +134,8 @@ async.series([
     checks: [
       didRun,
     ],
-    expect_error: true,
+    errors: 1,
+    warnings: 1,
     jobs: 12,
   }),
   test.bind(null, {
@@ -152,7 +155,7 @@ async.series([
         'txt/file2.txt': 'file2',
       },
     },
-    expect_error: true,
+    errors: 1,
     jobs: 3,
   }),
   test.bind(null, {
@@ -176,7 +179,6 @@ async.series([
         'txt/file2.txt': 'file2',
       },
     },
-    expect_error: false,
     jobs: 1,
   }),
   test.bind(null, {
@@ -199,7 +201,6 @@ async.series([
         'multi1-b.txt': 'm1b',
       },
     },
-    expect_error: false,
     jobs: 1,
   }),
   test.bind(null, {
@@ -220,8 +221,37 @@ async.series([
         'multi1-a.txt': 'm1a',
       },
     },
-    expect_error: false,
     jobs: 1,
+  }),
+  // Warning tests
+  test.bind(null, {
+    name: 'warns: initial',
+    tasklist: ['clean', 'warns'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    warnings: 1,
+    jobs: 2,
+  }),
+  test.bind(null, {
+    name: 'warns: no change',
+    tasklist: ['warns'],
+    warnings: 1, // still warns
+    jobs: 1, // re-runs warned job
+  }),
+  test.bind(null, {
+    name: 'warns: change other',
+    tasklist: ['warns'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1b',
+      }
+    },
+    warnings: 1, // still warns
+    jobs: 2, // re-runs warned job and new
   }),
 
 ], function (err) {
