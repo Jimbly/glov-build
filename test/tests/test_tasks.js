@@ -90,7 +90,40 @@ function concatCached(opts) {
 
 function atlas(job, done) {
   let input = job.getFile();
+  let user_data = job.getUserData();
   let input_data;
+
+  function doAtlas() {
+    let updated_files = job.getFilesUpdated();
+    let deleted_files = job.getFilesDeleted();
+    user_data.files = user_data.files || {};
+    for (let ii = 0; ii < deleted_files.length; ++ii) {
+      delete user_data.files[deleted_files[ii].path];
+    }
+
+    for (let ii = 0; ii < updated_files.length; ++ii) {
+      let f = updated_files[ii];
+      if (f === input) {
+        continue;
+      }
+      if (f.contents.toString().indexOf('warn') !== -1) {
+        job.warn(`Warning on ${f.path}`);
+      }
+      if (f.contents.toString().indexOf('error') !== -1) {
+        job.error(`Error on ${f.path}`);
+      }
+      user_data.files[f.path] = f;
+    }
+    let files = Object.values(user_data.files).sort(cmpName);
+
+    let buffer = Buffer.concat(files.map((f) => f.contents));
+    job.out({
+      path: input_data.output,
+      contents: buffer,
+    });
+    done();
+  }
+
   if (input.isUpdated()) {
     job.depReset();
 
@@ -107,7 +140,7 @@ function atlas(job, done) {
     if (!inputs || !inputs.length) {
       return done('Missing or empty `inputs` field');
     }
-    job.getUserData().atlas_data = input_data;
+    user_data.atlas_data = input_data;
 
     async.each(inputs, (name, next) => {
       job.depAdd(name, next);
@@ -115,14 +148,14 @@ function atlas(job, done) {
       if (err) {
         return done(err);
       }
-      concatCachedInternal({ output: input_data.output, skip: input.path }, job, done);
+      doAtlas();
     });
   } else {
     // only a dep has changed
-    input_data = job.getUserData().atlas_data;
+    input_data = user_data.atlas_data;
 
-    // input did not change, no changes which files we depend on
-    concatCachedInternal({ output: input_data.output }, job, done);
+    // input did not change, no changes to which files we depend on
+    doAtlas();
   }
 }
 

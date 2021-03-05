@@ -52,7 +52,10 @@ function testUpdateFS(name, ops) {
 }
 
 function test(opts, next) {
-  let { tasklist, ops, outputs, name, checks, warnings, errors, jobs } = opts;
+  let {
+    tasklist, ops, outputs, name, checks,
+    warnings, errors, jobs, files_updated, files_deleted,
+  } = opts;
   testUpdateFS(name, ops || {});
   gb.go(tasklist);
 
@@ -65,6 +68,12 @@ function test(opts, next) {
     assert.equal(gb.stats.jobs, jobs || 0, 'Unexpected number of jobs ran');
     assert.equal(gb.stats.errors, errors || 0, 'Unexpected number of errors');
     assert.equal(gb.stats.warnings, warnings || 0, 'Unexpected number of warnings');
+    if (files_updated !== undefined) {
+      assert.equal(gb.stats.files_updated, files_updated || 0, 'Unexpected number of files_updated');
+    }
+    if (files_deleted !== undefined) {
+      assert.equal(gb.stats.files_deleted, files_deleted || 0, 'Unexpected number of files_deleted');
+    }
     if (errors) {
       assert(err, 'Expected build to end in error');
     } else {
@@ -253,7 +262,122 @@ async.series([
     warnings: 1, // still warns
     jobs: 2, // re-runs warned job and new
   }),
+  test.bind(null, {
+    name: 'warns: no change',
+    tasklist: ['warns'],
+    ops: {
+      del: [
+        'txt/file2.txt',
+      ]
+    },
+    warnings: 0, // warning removed
+    jobs: 0,
+  }),
 
+  // warning/error handling tests and updated files counts in a task with deps
+  test.bind(null, {
+    name: 'atlaswarn: initial',
+    tasklist: ['clean', 'atlas'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "txt/file1.txt", "txt/file2.txt"]
+}`,
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2',
+      },
+    },
+    files_updated: 3,
+    warnings: 0,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: one change',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2b',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2b',
+      },
+    },
+    files_updated: 3, // should be 1 if this was run-time, but we're doing a new `go()`
+    warnings: 0,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: file1 warns',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'warn',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'warnfile2b',
+      },
+    },
+    files_updated: 3, // should be 1 if this was run-time, but we're doing a new `go()`
+    warnings: 1,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: change file2, file1 still warns',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2c',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'warnfile2c',
+      },
+    },
+    files_updated: 3, // should be 2 if this was run-time, but we're doing a new `go()`
+    warnings: 1,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: file1 fixed',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1b',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1bfile2c',
+      },
+    },
+    files_updated: 3, // should be 1 if this was run-time, but we're doing a new `go()`
+    warnings: 0,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: no change',
+    tasklist: ['atlas'],
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1bfile2c',
+      },
+    },
+    files_updated: 0,
+    warnings: 0,
+    jobs: 0,
+  }),
 ], function (err) {
   if (err) {
     throw err;
