@@ -1,6 +1,6 @@
 {
   "name": "glovjs-build",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "GLOV.js Build System",
   "main": "index.js",
   "author": "Jimb Esser (https://github.com/Jimbly)",
