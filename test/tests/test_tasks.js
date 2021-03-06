@@ -34,7 +34,7 @@ function reverse(job, done) {
     buffer[buffer.length - 1 - ii] = t;
   }
   job.out({
-    path: file.path,
+    relative: file.relative,
     contents: buffer,
   });
   done();
@@ -45,7 +45,7 @@ function concatSimple(opts) {
     let files = job.getFiles();
     let buffer = Buffer.concat(files.map((f) => f.contents));
     job.out({
-      path: opts.output,
+      relative: opts.output,
       contents: buffer,
     });
     done();
@@ -53,7 +53,7 @@ function concatSimple(opts) {
 }
 
 function cmpName(a, b) {
-  return a.path < b.path ? -1 : 1;
+  return a.relative < b.relative ? -1 : 1;
 }
 
 function concatCachedInternal(opts, job, done) {
@@ -62,15 +62,15 @@ function concatCachedInternal(opts, job, done) {
   let user_data = job.getUserData();
   user_data.files = user_data.files || {};
   for (let ii = 0; ii < deleted_files.length; ++ii) {
-    delete user_data.files[deleted_files[ii].path];
+    delete user_data.files[deleted_files[ii].relative];
   }
 
   for (let ii = 0; ii < updated_files.length; ++ii) {
     let f = updated_files[ii];
-    if (opts.skip === f.path) {
+    if (opts.skip === f.relative) {
       continue;
     }
-    user_data.files[f.path] = f;
+    user_data.files[f.relative] = f;
   }
   let files = Object.values(user_data.files).sort(cmpName);
 
@@ -78,7 +78,7 @@ function concatCachedInternal(opts, job, done) {
 
   let buffer = Buffer.concat(files.map((f) => f.contents));
   job.out({
-    path: opts.output,
+    relative: opts.output,
     contents: buffer,
   });
   done();
@@ -98,7 +98,7 @@ function atlas(job, done) {
     let deleted_files = job.getFilesDeleted();
     user_data.files = user_data.files || {};
     for (let ii = 0; ii < deleted_files.length; ++ii) {
-      delete user_data.files[deleted_files[ii].path];
+      delete user_data.files[deleted_files[ii].relative];
     }
 
     for (let ii = 0; ii < updated_files.length; ++ii) {
@@ -107,18 +107,18 @@ function atlas(job, done) {
         continue;
       }
       if (f.contents.toString().indexOf('warn') !== -1) {
-        job.warn(`Warning on ${f.path}`);
+        job.warn(`Warning on ${f.relative}`);
       }
       if (f.contents.toString().indexOf('error') !== -1) {
-        job.error(`Error on ${f.path}`);
+        job.error(`Error on ${f.relative}`);
       }
-      user_data.files[f.path] = f;
+      user_data.files[f.relative] = f;
     }
     let files = Object.values(user_data.files).sort(cmpName);
 
     let buffer = Buffer.concat(files.map((f) => f.contents));
     job.out({
-      path: input_data.output,
+      relative: input_data.output,
       contents: buffer,
     });
     done();
@@ -130,7 +130,7 @@ function atlas(job, done) {
     try {
       input_data = JSON.parse(input.contents);
     } catch (e) {
-      return done(`Error parsing ${input.path}: ${e}`);
+      return done(`Error parsing ${input.relative}: ${e}`);
     }
 
     let { output, inputs } = input_data;
@@ -165,7 +165,7 @@ function multiout(job, done) {
   try {
     input_data = JSON.parse(input.contents);
   } catch (e) {
-    return done(`Error parsing ${input.path}: ${e}`);
+    return done(`Error parsing ${input.relative}: ${e}`);
   }
 
   let { outputs } = input_data;
@@ -175,7 +175,7 @@ function multiout(job, done) {
 
   for (let key in outputs) {
     job.out({
-      path: key,
+      relative: key,
       contents: outputs[key],
     });
   }
@@ -184,7 +184,7 @@ function multiout(job, done) {
 
 function warnOn(file) {
   return function (job, done) {
-    if (job.getFile().path === file) {
+    if (job.getFile().relative === file) {
       job.warn(`(expected warning on ${file})`);
     }
     done();
@@ -193,7 +193,7 @@ function warnOn(file) {
 
 function errorOn(file) {
   return function (job, done) {
-    if (job.getFile().path === file) {
+    if (job.getFile().relative === file) {
       // done(err) should also do the same
       job.error(`(expected error on ${file})`);
     }
