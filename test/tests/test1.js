@@ -105,8 +105,7 @@ function test(opts, next) {
       }
     }
     testLog(name, 'Success');
-    gb.stop();
-    next();
+    gb.stop(next);
   });
 }
 

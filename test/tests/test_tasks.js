@@ -88,6 +88,13 @@ function concatCached(opts) {
   return concatCachedInternal.bind(null, opts);
 }
 
+let atlas_last_reset;
+exports.atlasLastReset = function () {
+  assert(atlas_last_reset);
+};
+exports.atlasLastNotReset = function () {
+  assert(!atlas_last_reset);
+};
 function atlas(job, done) {
   let input = job.getFile();
   let user_data = job.getUserData();
@@ -98,6 +105,7 @@ function atlas(job, done) {
     let deleted_files = job.getFilesDeleted();
     user_data.files = user_data.files || {};
     for (let ii = 0; ii < deleted_files.length; ++ii) {
+      job.error(`Missing source file ${deleted_files[ii].relative}`);
       delete user_data.files[deleted_files[ii].relative];
     }
 
@@ -125,6 +133,8 @@ function atlas(job, done) {
   }
 
   if (input.isUpdated()) {
+    atlas_last_reset = true;
+    job.log('Doing reset');
     job.depReset();
 
     try {
@@ -151,6 +161,8 @@ function atlas(job, done) {
       doAtlas();
     });
   } else {
+    atlas_last_reset = false;
+    job.log('Doing incremental update');
     // only a dep has changed
     input_data = user_data.atlas_data;
 
