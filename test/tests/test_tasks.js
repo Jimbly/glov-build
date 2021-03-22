@@ -40,10 +40,14 @@ function reverse(job, done) {
   done();
 }
 
+function toContents(f) {
+  return f.contents;
+}
+
 function concatSimple(opts) {
   return function (job, done) {
     let files = job.getFiles();
-    let buffer = Buffer.concat(files.map((f) => f.contents));
+    let buffer = Buffer.concat(files.filter(toContents).map(toContents));
     job.out({
       relative: opts.output,
       contents: buffer,
@@ -58,25 +62,25 @@ function cmpName(a, b) {
 
 function concatCachedInternal(opts, job, done) {
   let updated_files = job.getFilesUpdated();
-  let deleted_files = job.getFilesDeleted();
   let user_data = job.getUserData();
   user_data.files = user_data.files || {};
-  for (let ii = 0; ii < deleted_files.length; ++ii) {
-    delete user_data.files[deleted_files[ii].relative];
-  }
 
   for (let ii = 0; ii < updated_files.length; ++ii) {
     let f = updated_files[ii];
     if (opts.skip === f.relative) {
       continue;
     }
-    user_data.files[f.relative] = f;
+    if (!f.contents) {
+      delete user_data.files[f.relative];
+    } else {
+      user_data.files[f.relative] = f;
+    }
   }
   let files = Object.values(user_data.files).sort(cmpName);
 
   // Note: above is equivalent to `let files = job.getFiles()`, since we're not actually caching anything
 
-  let buffer = Buffer.concat(files.map((f) => f.contents));
+  let buffer = Buffer.concat(files.map(toContents));
   job.out({
     relative: opts.output,
     contents: buffer,
@@ -102,16 +106,16 @@ function atlas(job, done) {
 
   function doAtlas() {
     let updated_files = job.getFilesUpdated();
-    let deleted_files = job.getFilesDeleted();
     user_data.files = user_data.files || {};
-    for (let ii = 0; ii < deleted_files.length; ++ii) {
-      job.error(`Missing source file ${deleted_files[ii].relative}`);
-      delete user_data.files[deleted_files[ii].relative];
-    }
 
     for (let ii = 0; ii < updated_files.length; ++ii) {
       let f = updated_files[ii];
       if (f === input) {
+        continue;
+      }
+      if (!f.contents) {
+        job.error(`Missing source file ${f.relative}`);
+        delete user_data.files[f.relative];
         continue;
       }
       if (f.contents.toString().indexOf('warn') !== -1) {
@@ -124,7 +128,7 @@ function atlas(job, done) {
     }
     let files = Object.values(user_data.files).sort(cmpName);
 
-    let buffer = Buffer.concat(files.map((f) => f.contents));
+    let buffer = Buffer.concat(files.map(toContents));
     job.out({
       relative: input_data.output,
       contents: buffer,
@@ -153,13 +157,13 @@ function atlas(job, done) {
     user_data.atlas_data = input_data;
 
     async.each(inputs, (name, next) => {
-      job.depAdd(name, next);
-    }, (err) => {
-      if (err) {
-        return done(err);
-      }
-      doAtlas();
-    });
+      job.depAdd(name, function (err) {
+        if (err) {
+          job.error(`Missining source file ${name}`, err);
+        }
+        next();
+      });
+    }, doAtlas);
   } else {
     atlas_last_reset = false;
     job.log('Doing incremental update');

@@ -94,8 +94,10 @@ function test(opts, next) {
 
   function init(next) {
     testLog(name, 'Initializing...');
-    testUpdateFS(name, ops || {});
-    next();
+    setTimeout(() => {
+      testUpdateFS(name, ops || {});
+      next();
+    }, 55); // > 50ms to avoid throttling in chokidar
   }
 
   function checkResults(err) {
@@ -224,7 +226,7 @@ async.series([
       dev: {
         'concat.txt': 'ascii1file2',
         'concat-reverse.txt': '2elif',
-        // 'my_atlas.txt': 'file1file2', // pruned with error; good idea?
+        'my_atlas.txt': 'file2', // still output even with error; good idea? up to task?
         // 'txt/file1.txt': 'file1', // pruned
         'txt/file2.txt': 'file2',
       },
@@ -256,6 +258,57 @@ async.series([
     },
     checks: [atlasLastReset],
     jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'broken atlas again',
+    tasklist: ['reduced'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "txt/file1.txt", "txt/file2.txt"]
+}`,
+      }
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'ascii1file2',
+        'concat-reverse.txt': '2elif',
+        'my_atlas.txt': 'file2',
+        'txt/file2.txt': 'file2',
+      },
+    },
+    checks: [
+      atlasLastReset,
+    ],
+    errors: 1,
+    warnings: 0,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'fix by re-adding deleted file',
+    tasklist: ['reduced'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1b',
+      }
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'ascii1file1bfile2',
+        'concat-reverse.txt': 'b1elif2elif',
+        'my_atlas.txt': 'file1bfile2',
+        'txt/file1.txt': 'file1b',
+        'txt/file2.txt': 'file2',
+      },
+    },
+    checks: [
+      atlasLastNotReset,
+    ],
+    errors: 0,
+    warnings: 0,
+    jobs: 5,
   }),
 
   // Atlas dynamic reprocessing and caching

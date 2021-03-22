@@ -158,7 +158,7 @@ async.series([
       dev: {
         'concat.txt': 'ascii1file2',
         'concat-reverse.txt': '2elif',
-        // 'my_atlas.txt': 'file1file2', // pruned with error; good idea?
+        'my_atlas.txt': 'file2', // still output even with error; good idea? up to task?
         // 'txt/file1.txt': 'file1', // pruned
         'txt/file2.txt': 'file2',
       },
