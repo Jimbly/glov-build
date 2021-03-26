@@ -408,195 +408,209 @@ async.series([
     jobs: 0,
   }),
 
-  //   testReset,
-  //   test.bind(null, {
-  //     name: 'multiout (2)',
-  //     tasklist: ['clean', 'multiout'],
-  //     ops: {
-  //       add: {
-  //         'multi/multi1.json':
-  // `{
-  //   "outputs": {
-  //     "multi1-a.txt": "m1a",
-  //     "multi1-b.txt": "m1b"
-  //   }
-  // }`,
-  //       }
-  //     },
-  //     outputs: {
-  //       dev: {
-  //         'multi1-a.txt': 'm1a',
-  //         'multi1-b.txt': 'm1b',
-  //       },
-  //     },
-  //     jobs: 1,
-  //   }),
-  //   test.bind(null, {
-  //     name: 'multiout (1)',
-  //     tasklist: ['multiout'],
-  //     ops: {
-  //       add: {
-  //         'multi/multi1.json':
-  // `{
-  //   "outputs": {
-  //     "multi1-a.txt": "m1a"
-  //   }
-  // }`,
-  //       }
-  //     },
-  //     outputs: {
-  //       dev: {
-  //         'multi1-a.txt': 'm1a',
-  //       },
-  //     },
-  //     jobs: 1,
-  //   }),
-  //   // Warning tests
-  //   test.bind(null, {
-  //     name: 'warns: initial',
-  //     tasklist: ['clean', 'warns'],
-  //     ops: {
-  //       add: {
-  //         'txt/file1.txt': 'file1',
-  //         'txt/file2.txt': 'file2',
-  //       }
-  //     },
-  //     warnings: 1,
-  //     jobs: 2,
-  //   }),
-  //   test.bind(null, {
-  //     name: 'warns: no change',
-  //     tasklist: ['warns'],
-  //     warnings: 1, // still warns
-  //     jobs: 1, // re-runs warned job
-  //   }),
-  //   test.bind(null, {
-  //     name: 'warns: change other',
-  //     tasklist: ['warns'],
-  //     ops: {
-  //       add: {
-  //         'txt/file1.txt': 'file1b',
-  //       }
-  //     },
-  //     warnings: 1, // still warns
-  //     jobs: 2, // re-runs warned job and new
-  //   }),
-  //   test.bind(null, {
-  //     name: 'warns: no change',
-  //     tasklist: ['warns'],
-  //     ops: {
-  //       del: [
-  //         'txt/file2.txt',
-  //       ]
-  //     },
-  //     warnings: 0, // warning removed
-  //     jobs: 0,
-  //   }),
+  testReset,
+  test.bind(null, {
+    name: 'multiout (2)',
+    tasklist: ['multiout'],
+    ops: {
+      add: {
+        'multi/multi1.json':
+`{
+  "outputs": {
+    "multi1-a.txt": "m1a",
+    "multi1-b.txt": "m1b"
+  }
+}`,
+      }
+    },
+    outputs: {
+      dev: {
+        'multi1-a.txt': 'm1a',
+        'multi1-b.txt': 'm1b',
+      },
+    },
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'multiout (1)',
+    tasklist: ['multiout'],
+    ops: {
+      add: {
+        'multi/multi1.json':
+`{
+  "outputs": {
+    "multi1-a.txt": "m1a"
+  }
+}`,
+      }
+    },
+    outputs: {
+      dev: {
+        'multi1-a.txt': 'm1a',
+      },
+    },
+    jobs: 1,
+  }),
 
-  //   // warning/error handling tests and updated files counts in a task with deps
-  //   test.bind(null, {
-  //     name: 'atlaswarn: initial',
-  //     tasklist: ['clean', 'atlas'],
-  //     ops: {
-  //       add: {
-  //         'atlas/atlas1.json':
-  // `{
-  //   "output": "my_atlas.txt",
-  //   "inputs": [ "txt/file1.txt", "txt/file2.txt"]
-  // }`,
-  //         'txt/file1.txt': 'file1',
-  //         'txt/file2.txt': 'file2',
-  //       }
-  //     },
-  //     outputs: {
-  //       dev: {
-  //         'my_atlas.txt': 'file1file2',
-  //       },
-  //     },
-  //     files_updated: 3,
-  //     warnings: 0,
-  //     jobs: 1,
-  //   }),
-  //   test.bind(null, {
-  //     name: 'atlaswarn: one change',
-  //     tasklist: ['atlas'],
-  //     ops: {
-  //       add: {
-  //         'txt/file2.txt': 'file2b',
-  //       }
-  //     },
-  //     outputs: {
-  //       dev: {
-  //         'my_atlas.txt': 'file1file2b',
-  //       },
-  //     },
-  //     files_updated: 3, // should be 1 if this was run-time, but we're doing a new `go()`
-  //     warnings: 0,
-  //     jobs: 1,
-  //   }),
-  //   test.bind(null, {
-  //     name: 'atlaswarn: file1 warns',
-  //     tasklist: ['atlas'],
-  //     ops: {
-  //       add: {
-  //         'txt/file1.txt': 'warn',
-  //       }
-  //     },
-  //     outputs: {
-  //       dev: {
-  //         'my_atlas.txt': 'warnfile2b',
-  //       },
-  //     },
-  //     files_updated: 3, // should be 1 if this was run-time, but we're doing a new `go()`
-  //     warnings: 1,
-  //     jobs: 1,
-  //   }),
-  //   test.bind(null, {
-  //     name: 'atlaswarn: change file2, file1 still warns',
-  //     tasklist: ['atlas'],
-  //     ops: {
-  //       add: {
-  //         'txt/file2.txt': 'file2c',
-  //       }
-  //     },
-  //     outputs: {
-  //       dev: {
-  //         'my_atlas.txt': 'warnfile2c',
-  //       },
-  //     },
-  //     files_updated: 3, // should be 2 if this was run-time, but we're doing a new `go()`
-  //     warnings: 1,
-  //     jobs: 1,
-  //   }),
-  //   test.bind(null, {
-  //     name: 'atlaswarn: file1 fixed',
-  //     tasklist: ['atlas'],
-  //     ops: {
-  //       add: {
-  //         'txt/file1.txt': 'file1b',
-  //       }
-  //     },
-  //     outputs: {
-  //       dev: {
-  //         'my_atlas.txt': 'file1bfile2c',
-  //       },
-  //     },
-  //     files_updated: 3, // should be 1 if this was run-time, but we're doing a new `go()`
-  //     warnings: 0,
-  //     jobs: 1,
-  //   }),
-  //   test.bind(null, {
-  //     name: 'atlaswarn: no change',
-  //     tasklist: ['atlas'],
-  //     outputs: {
-  //       dev: {
-  //         'my_atlas.txt': 'file1bfile2c',
-  //       },
-  //     },
-  //     files_updated: 0,
-  //     warnings: 0,
-  //     jobs: 0,
-  //   }),
+  testReset,
+  // Warning tests
+  test.bind(null, {
+    name: 'warns: initial',
+    tasklist: ['warns'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    warnings: 1,
+    jobs: 2,
+  }),
+  test.bind(null, {
+    name: 'warns: no change',
+    tasklist: ['warns'],
+    ops: {
+      spurious: [
+        'txt/file1.txt',
+      ]
+    },
+    warnings: 0,
+    jobs: 0,
+  }),
+  test.bind(null, {
+    name: 'warns: change other',
+    tasklist: ['warns'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1b',
+      }
+    },
+    warnings: 1, // still warns
+    jobs: 1, // runs only new job
+  }),
+  test.bind(null, {
+    name: 'warns: no change',
+    tasklist: ['warns'],
+    ops: {
+      del: [
+        'txt/file2.txt',
+      ]
+    },
+    warnings: 0, // warning removed
+    jobs: 0,
+  }),
+
+  // warning/error handling tests and updated files counts in a task with deps
+  testReset,
+  test.bind(null, {
+    name: 'atlaswarn: initial',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "txt/file1.txt", "txt/file2.txt"]
+}`,
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2',
+      },
+    },
+    files_updated: 3,
+    fs_write: 1,
+    warnings: 0,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: one change',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2b',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2b',
+      },
+    },
+    files_updated: 1,
+    warnings: 0,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: file1 warns',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'warn',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'warnfile2b',
+      },
+    },
+    files_updated: 1,
+    warnings: 1,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: change file2, file1 still warns',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2c',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'warnfile2c',
+      },
+    },
+    files_updated: 2,
+    warnings: 1,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: file1 fixed',
+    tasklist: ['atlas'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1b',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1bfile2c',
+      },
+    },
+    files_updated: 1,
+    warnings: 0,
+    jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'atlaswarn: no change',
+    tasklist: ['atlas'],
+    ops: {
+      spurious: [
+        'txt/file1.txt',
+      ]
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1bfile2c',
+      },
+    },
+    files_updated: 0,
+    warnings: 0,
+    jobs: 0,
+  }),
   testShutdown,
 ], function (err) {
   if (err) {

@@ -119,10 +119,10 @@ function atlas(job, done) {
         continue;
       }
       if (f.contents.toString().indexOf('warn') !== -1) {
-        job.warn(`Warning on ${f.relative}`);
+        job.warn(f, `Warning on ${f.relative}`);
       }
       if (f.contents.toString().indexOf('error') !== -1) {
-        job.error(`Error on ${f.relative}`);
+        job.error(f, `Error on ${f.relative}`);
       }
       user_data.files[f.relative] = f;
     }
@@ -136,7 +136,7 @@ function atlas(job, done) {
     done();
   }
 
-  if (input.isUpdated()) {
+  if (job.isFileUpdated(input)) {
     atlas_last_reset = true;
     job.log('Doing reset');
     job.depReset();
