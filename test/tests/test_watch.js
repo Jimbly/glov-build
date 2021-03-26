@@ -62,12 +62,15 @@ function testUpdateFS(name, ops) {
     }
     fs.writeFileSync(full_path, ops.add[key]);
   }
-  if (ops.del) {
-    for (let ii = 0; ii < ops.del.length; ++ii) {
-      let full_path = path.join(WORK_DIR, ops.del[ii]);
-      fs.unlinkSync(full_path);
-    }
-  }
+  (ops.del || []).forEach(function (relative) {
+    let full_path = path.join(WORK_DIR, relative);
+    fs.unlinkSync(full_path);
+  });
+  (ops.spurious || []).forEach(function (relative) {
+    let full_path = path.join(WORK_DIR, relative);
+    let stat = fs.statSync(full_path);
+    fs.utimesSync(full_path, stat.atime, stat.mtime);
+  });
 }
 
 function test(opts, next) {
@@ -210,6 +213,10 @@ async.series([
       didRun,
       atlasLastReset,
     ],
+    fs_read: 4,
+    fs_write: 7,
+    fs_stat: 4,
+    fs_delete: 0,
     errors: 1,
     warnings: 1,
     jobs: 12,
@@ -232,6 +239,10 @@ async.series([
       },
     },
     checks: [atlasLastNotReset],
+    fs_read: 0,
+    fs_write: 3,
+    fs_stat: 0,
+    fs_delete: 2,
     errors: 1,
     jobs: 3,
   }),
@@ -257,6 +268,10 @@ async.series([
       },
     },
     checks: [atlasLastReset],
+    fs_read: 1,
+    fs_write: 1,
+    fs_stat: 0,
+    fs_delete: 0,
     jobs: 1,
   }),
   test.bind(null, {
@@ -282,6 +297,10 @@ async.series([
     checks: [
       atlasLastReset,
     ],
+    fs_read: 1,
+    fs_write: 1,
+    fs_stat: 0,
+    fs_delete: 0,
     errors: 1,
     warnings: 0,
     jobs: 1,
@@ -306,6 +325,10 @@ async.series([
     checks: [
       atlasLastNotReset,
     ],
+    fs_read: 1,
+    fs_write: 5,
+    fs_stat: 0,
+    fs_delete: 0,
     errors: 0,
     warnings: 0,
     jobs: 5,
@@ -335,7 +358,7 @@ async.series([
     checks: [atlasLastReset],
     fs_read: 3,
     fs_write: 1,
-    fs_stat: 4,
+    fs_stat: 3,
     fs_delete: 0,
     errors: 0,
     warnings: 0,
@@ -355,13 +378,34 @@ async.series([
       },
     },
     checks: [atlasLastNotReset],
-    // fs_read: 1,
-    // fs_write: 1,
-    // fs_stat: 2,
-    // fs_delete: 0,
+    fs_read: 1,
+    fs_write: 1,
+    fs_stat: 0,
+    fs_delete: 0,
     errors: 0,
     warnings: 0,
     jobs: 1,
+  }),
+  test.bind(null, {
+    name: 'spurious change',
+    tasklist: ['atlas'],
+    ops: {
+      spurious: [
+        'txt/file1.txt',
+      ]
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1afile2',
+      },
+    },
+    fs_read: 0,
+    fs_write: 0,
+    fs_stat: 0,
+    fs_delete: 0,
+    errors: 0,
+    warnings: 0,
+    jobs: 0,
   }),
 
   //   testReset,
