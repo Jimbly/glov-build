@@ -6,8 +6,8 @@
   "author": "Jimb Esser (https://github.com/Jimbly)",
   "license": "UNLICENSED",
   "scripts": {
-    "test": "nodemon test/tests/test1.js",
-    "test_watch": "nodemon test/tests/test_watch.js"
+    "test": "nodemon test/tests/test_watch.js",
+    "test_taskmod": "nodemon test/tests/test_taskmod.js"
   },
   "dependencies": {
     "async": "^3.2.0",
