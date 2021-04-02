@@ -9,7 +9,7 @@ const rimraf = require('rimraf');
 const readdirRecursive = require('recursive-readdir-synchronous');
 const { forwardSlashes } = require('../../lib/util.js');
 
-const { targets, STATE_DIR, WORK_DIR, didRun } = require('./test_tasks.js');
+const { targets, STATE_DIR, WORK_DIR, didRun, registerTasks } = require('./test_tasks.js');
 
 function testLog(name, str) {
   console.log(chalk.cyan.bold(`TEST(${name}): ${str}`));
@@ -57,6 +57,7 @@ function test(opts, next) {
     warnings, errors, jobs, files_updated, files_deleted,
   } = opts;
   testUpdateFS(name, ops || {});
+  registerTasks();
   gb.go(tasklist);
 
   gb.once('done', function (err) {

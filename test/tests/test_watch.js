@@ -12,6 +12,7 @@ const { forwardSlashes } = require('../../lib/util.js');
 const {
   targets, STATE_DIR, WORK_DIR,
   didRun, atlasLastReset, atlasLastNotReset,
+  registerTasks,
 } = require('./test_tasks.js');
 
 function testLog(name, str) {
@@ -44,7 +45,9 @@ function testShutdown(next) {
 
 function testReset(next) {
   testShutdown(function () {
-    testClean(next);
+    testClean(function () {
+      next();
+    });
   });
 }
 
@@ -73,12 +76,16 @@ function testUpdateFS(name, ops) {
   });
 }
 
-function test(opts, next) {
+function test(multi_opts, opts, next) {
+  let { watch } = multi_opts;
   let {
-    tasklist, ops, outputs, name, checks,
+    tasklist, ops, outputs, name, results,
+  } = opts;
+  let {
+    checks,
     warnings, errors, jobs, files_updated, files_deleted,
     fs_read, fs_write, fs_stat, fs_delete,
-  } = opts;
+  } = results;
 
   let left = 2;
   let got_err;
@@ -92,7 +99,11 @@ function test(opts, next) {
     // TODO: catch if this fails, re-register 'done' and wait 1 second before
     //   timing out and trying again without a try/catch?
     testLog(name, 'Success');
-    next();
+    if (!watch) {
+      testShutdown(next);
+    } else {
+      next();
+    }
   }
 
   function init(next) {
@@ -164,7 +175,9 @@ function test(opts, next) {
 
   if (gb_running) {
     gb.setActiveTasks(tasklist);
-    gb.reset();
+    gb.resetStats();
+  } else {
+    registerTasks();
   }
   gb.once('done', onDone);
   init(function () {
@@ -172,11 +185,43 @@ function test(opts, next) {
       gb_running = true;
       gb.go({
         tasks: tasklist,
-        watch: true,
+        watch,
       });
     }
     onDone();
   });
+}
+
+function multiTest(opts, list) {
+  return function (next) {
+    let tasks = [];
+    let orig_name = list.map((a) => a.name);
+    function addKey(key, multi_opts) {
+      let result_key = `results_${key}`;
+      tasks.push(testReset);
+      for (let ii = 0; ii < list.length; ++ii) {
+        let base = list[ii];
+        let results = {
+          ...(base.results || {}),
+          ...(base[result_key] || {}),
+        };
+        let entry = {
+          ...base,
+          results,
+          name: `${key}:${orig_name[ii]}`,
+        };
+        tasks.push(test.bind(null, multi_opts, entry));
+      }
+    }
+    if (opts.watch) {
+      addKey('watch', { watch: true });
+    }
+    if (opts.serial) {
+      addKey('serial', {});
+    }
+    assert(tasks.length);
+    async.series(tasks, next);
+  };
 }
 
 let finished = false;
@@ -184,8 +229,7 @@ process.on('exit', function () {
   assert(finished, 'Process exited before all tests finished');
 });
 async.series([
-  testReset,
-  test.bind(null, {
+  multiTest({ watch: true, serial: true }, [{
     name: 'initial',
     tasklist: ['default'],
     ops: {
@@ -209,19 +253,20 @@ async.series([
         'txt/file2.txt': 'file2',
       },
     },
-    checks: [
-      didRun,
-      atlasLastReset,
-    ],
-    fs_read: 4,
-    fs_write: 7,
-    fs_stat: 4,
-    fs_delete: 0,
-    errors: 1,
-    warnings: 1,
-    jobs: 12,
-  }),
-  test.bind(null, {
+    results: { // same for both
+      checks: [
+        didRun,
+        atlasLastReset,
+      ],
+      fs_read: 4,
+      fs_write: 7,
+      fs_stat: 4,
+      fs_delete: 0,
+      errors: 1,
+      warnings: 1,
+      jobs: 12,
+    },
+  }, {
     name: 'delete 1',
     tasklist: ['reduced'],
     ops: {
@@ -238,15 +283,23 @@ async.series([
         'txt/file2.txt': 'file2',
       },
     },
-    checks: [atlasLastNotReset],
-    fs_read: 0,
-    fs_write: 3,
-    fs_stat: 0,
-    fs_delete: 2,
-    errors: 1,
-    jobs: 3,
-  }),
-  test.bind(null, {
+    results: {
+      fs_write: 3,
+      fs_delete: 2,
+      jobs: 3,
+      errors: 1,
+    },
+    results_watch: {
+      checks: [atlasLastNotReset],
+      fs_read: 0,
+      fs_stat: 0,
+    },
+    results_serial: {
+      checks: [atlasLastReset],
+      fs_read: 4,
+      fs_stat: 10, // was once 9?
+    },
+  }, {
     name: 'fix atlas',
     tasklist: ['reduced'],
     ops: {
@@ -267,14 +320,21 @@ async.series([
         'txt/file2.txt': 'file2',
       },
     },
-    checks: [atlasLastReset],
-    fs_read: 1,
-    fs_write: 1,
-    fs_stat: 0,
-    fs_delete: 0,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      checks: [atlasLastReset],
+      fs_write: 1,
+      fs_delete: 0,
+      jobs: 1,
+    },
+    results_watch: {
+      fs_read: 1,
+      fs_stat: 0,
+    },
+    results_serial: {
+      fs_read: 2,
+      fs_stat: 7,
+    },
+  }, {
     name: 'broken atlas again',
     tasklist: ['reduced'],
     ops: {
@@ -294,18 +354,23 @@ async.series([
         'txt/file2.txt': 'file2',
       },
     },
-    checks: [
-      atlasLastReset,
-    ],
-    fs_read: 1,
-    fs_write: 1,
-    fs_stat: 0,
-    fs_delete: 0,
-    errors: 1,
-    warnings: 0,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      checks: [atlasLastReset],
+      fs_write: 1,
+      fs_delete: 0,
+      errors: 1,
+      warnings: 0,
+      jobs: 1,
+    },
+    results_watch: {
+      fs_read: 1,
+      fs_stat: 0,
+    },
+    results_serial: {
+      fs_read: 2,
+      fs_stat: 8,
+    },
+  }, {
     name: 'fix by re-adding deleted file',
     tasklist: ['reduced'],
     ops: {
@@ -322,21 +387,27 @@ async.series([
         'txt/file2.txt': 'file2',
       },
     },
-    checks: [
-      atlasLastNotReset,
-    ],
-    fs_read: 1,
-    fs_write: 5,
-    fs_stat: 0,
-    fs_delete: 0,
-    errors: 0,
-    warnings: 0,
-    jobs: 5,
-  }),
+    results: {
+      fs_write: 5,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 5,
+    },
+    results_watch: {
+      checks: [atlasLastNotReset],
+      fs_read: 1,
+      fs_stat: 0,
+    },
+    results_serial: {
+      checks: [atlasLastReset],
+      fs_read: 5,
+      fs_stat: 6,
+    },
+  }]),
 
   // Atlas dynamic reprocessing and caching
-  testReset,
-  test.bind(null, {
+  multiTest({ watch: true, serial: true }, [{
     name: 'atlas dynamic reset',
     tasklist: ['atlas'],
     ops: {
@@ -355,16 +426,17 @@ async.series([
         'my_atlas.txt': 'file1file2',
       },
     },
-    checks: [atlasLastReset],
-    fs_read: 3,
-    fs_write: 1,
-    fs_stat: 3,
-    fs_delete: 0,
-    errors: 0,
-    warnings: 0,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      checks: [atlasLastReset],
+      fs_read: 3,
+      fs_write: 1,
+      fs_stat: 3,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 1,
+    },
+  }, {
     name: 'atlas dynamic mod',
     tasklist: ['atlas'],
     ops: {
@@ -377,16 +449,22 @@ async.series([
         'my_atlas.txt': 'file1afile2',
       },
     },
-    checks: [atlasLastNotReset],
-    fs_read: 1,
-    fs_write: 1,
-    fs_stat: 0,
-    fs_delete: 0,
-    errors: 0,
-    warnings: 0,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      fs_write: 1,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 1,
+    },
+    results_watch: {
+      checks: [atlasLastNotReset],
+      fs_read: 1,
+      fs_stat: 0,
+    },
+    results_serial: {
+      checks: [atlasLastReset],
+    },
+  }, {
     name: 'spurious change',
     tasklist: ['atlas'],
     ops: {
@@ -399,17 +477,23 @@ async.series([
         'my_atlas.txt': 'file1afile2',
       },
     },
-    fs_read: 0,
-    fs_write: 0,
-    fs_stat: 0,
-    fs_delete: 0,
-    errors: 0,
-    warnings: 0,
-    jobs: 0,
-  }),
+    results: {
+      fs_read: 0,
+      fs_write: 0,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 0,
+    },
+    results_watch: {
+      fs_stat: 0,
+    },
+    results_serial: {
+      fs_stat: 4,
+    },
+  }]),
 
-  testReset,
-  test.bind(null, {
+  multiTest({ watch: true, serial: true }, [{
     name: 'multiout (2)',
     tasklist: ['multiout'],
     ops: {
@@ -429,9 +513,10 @@ async.series([
         'multi1-b.txt': 'm1b',
       },
     },
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      jobs: 1,
+    },
+  }, {
     name: 'multiout (1)',
     tasklist: ['multiout'],
     ops: {
@@ -449,12 +534,13 @@ async.series([
         'multi1-a.txt': 'm1a',
       },
     },
-    jobs: 1,
-  }),
+    results: {
+      jobs: 1,
+    },
+  }]),
 
-  testReset,
   // Warning tests
-  test.bind(null, {
+  multiTest({ watch: true, serial: true }, [{
     name: 'warns: initial',
     tasklist: ['warns'],
     ops: {
@@ -463,10 +549,11 @@ async.series([
         'txt/file2.txt': 'file2',
       }
     },
-    warnings: 1,
-    jobs: 2,
-  }),
-  test.bind(null, {
+    results: {
+      warnings: 1,
+      jobs: 2,
+    },
+  }, {
     name: 'warns: no change',
     tasklist: ['warns'],
     ops: {
@@ -474,10 +561,15 @@ async.series([
         'txt/file1.txt',
       ]
     },
-    warnings: 0,
-    jobs: 0,
-  }),
-  test.bind(null, {
+    results_watch: {
+      warnings: 0, // spurious changes causes nothing to happen while watching
+      jobs: 0,
+    },
+    results_serial: {
+      warnings: 1, // re-emits warning if running fresh
+      jobs: 1, // re-runs the job to be safe
+    },
+  }, {
     name: 'warns: change other',
     tasklist: ['warns'],
     ops: {
@@ -485,24 +577,31 @@ async.series([
         'txt/file1.txt': 'file1b',
       }
     },
-    warnings: 1, // still warns
-    jobs: 1, // runs only new job
-  }),
-  test.bind(null, {
-    name: 'warns: no change',
+    results: {
+      warnings: 1, // still warns
+    },
+    results_watch: {
+      jobs: 1, // runs only new job
+    },
+    results_serial: {
+      jobs: 2, // also re-runs job that previously warned
+    },
+  }, {
+    name: 'warns: delete bad',
     tasklist: ['warns'],
     ops: {
       del: [
         'txt/file2.txt',
       ]
     },
-    warnings: 0, // warning removed
-    jobs: 0,
-  }),
+    results: {
+      warnings: 0, // warning removed
+      jobs: 0,
+    },
+  }]),
 
   // warning/error handling tests and updated files counts in a task with deps
-  testReset,
-  test.bind(null, {
+  multiTest({ watch: true, serial: true }, [{
     name: 'atlaswarn: initial',
     tasklist: ['atlas'],
     ops: {
@@ -521,12 +620,13 @@ async.series([
         'my_atlas.txt': 'file1file2',
       },
     },
-    files_updated: 3,
-    fs_write: 1,
-    warnings: 0,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      files_updated: 3,
+      fs_write: 1,
+      warnings: 0,
+      jobs: 1,
+    },
+  }, {
     name: 'atlaswarn: one change',
     tasklist: ['atlas'],
     ops: {
@@ -539,11 +639,17 @@ async.series([
         'my_atlas.txt': 'file1file2b',
       },
     },
-    files_updated: 1,
-    warnings: 0,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      warnings: 0,
+      jobs: 1,
+    },
+    results_watch: {
+      files_updated: 1, // only one file shows as "updated"
+    },
+    results_serial: {
+      files_updated: 3, // all files show as "updated" in a new process
+    },
+  }, {
     name: 'atlaswarn: file1 warns',
     tasklist: ['atlas'],
     ops: {
@@ -556,11 +662,17 @@ async.series([
         'my_atlas.txt': 'warnfile2b',
       },
     },
-    files_updated: 1,
-    warnings: 1,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      warnings: 1,
+      jobs: 1,
+    },
+    results_watch: {
+      files_updated: 1, // only one file shows as "updated"
+    },
+    results_serial: {
+      files_updated: 3, // all files show as "updated" in a new process
+    },
+  }, {
     name: 'atlaswarn: change file2, file1 still warns',
     tasklist: ['atlas'],
     ops: {
@@ -573,11 +685,17 @@ async.series([
         'my_atlas.txt': 'warnfile2c',
       },
     },
-    files_updated: 2,
-    warnings: 1,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      warnings: 1,
+      jobs: 1,
+    },
+    results_watch: {
+      files_updated: 2,
+    },
+    results_serial: {
+      files_updated: 3,
+    },
+  }, {
     name: 'atlaswarn: file1 fixed',
     tasklist: ['atlas'],
     ops: {
@@ -590,11 +708,17 @@ async.series([
         'my_atlas.txt': 'file1bfile2c',
       },
     },
-    files_updated: 1,
-    warnings: 0,
-    jobs: 1,
-  }),
-  test.bind(null, {
+    results: {
+      warnings: 0,
+      jobs: 1,
+    },
+    results_watch: {
+      files_updated: 1, // only one file shows as "updated"
+    },
+    results_serial: {
+      files_updated: 3, // all files show as "updated" in a new process
+    },
+  }, {
     name: 'atlaswarn: no change',
     tasklist: ['atlas'],
     ops: {
@@ -607,10 +731,12 @@ async.series([
         'my_atlas.txt': 'file1bfile2c',
       },
     },
-    files_updated: 0,
-    warnings: 0,
-    jobs: 0,
-  }),
+    results: {
+      files_updated: 0,
+      warnings: 0,
+      jobs: 0,
+    },
+  }]),
   testShutdown,
 ], function (err) {
   if (err) {
