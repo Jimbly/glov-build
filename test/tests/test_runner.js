@@ -2,7 +2,7 @@ exports.multiTest = multiTest;
 exports.doTestList = doTestList;
 
 const assert = require('assert');
-const async = require('async');
+const { asyncSeries } = require('glovjs-async');
 const chalk = require('chalk');
 const fs = require('fs');
 // const gb = require('glovjs-build');
@@ -33,7 +33,7 @@ function testClean(next) {
   for (let key in targets) {
     tasks.push(clean.bind(null, targets[key]));
   }
-  async.series(tasks, next);
+  asyncSeries(tasks, next);
 }
 
 let gb_running = false;
@@ -224,7 +224,7 @@ function multiTest(opts, list) {
       addKey('serial', {});
     }
     assert(tasks.length);
-    async.series(tasks, next);
+    asyncSeries(tasks, next);
   };
 }
 
@@ -233,7 +233,7 @@ function doTestList(list) {
     assert(false, 'Process exited before all tests finished');
   }
   process.on('exit', onExit);
-  async.series(list, function (err) {
+  asyncSeries(list, function (err) {
     process.removeListener('exit', onExit);
     if (err) {
       throw err;

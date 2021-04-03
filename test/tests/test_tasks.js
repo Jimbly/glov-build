@@ -1,5 +1,5 @@
 const assert = require('assert');
-const async = require('async');
+const { asyncEach } = require('glovjs-async');
 // const gb = require('glovjs-build');
 const gb = require('../../');
 const path = require('path');
@@ -165,7 +165,7 @@ exports.registerTasks = function () {
       }
       user_data.atlas_data = input_data;
 
-      async.each(inputs, (name, next) => {
+      asyncEach(inputs, (name, next) => {
         job.depAdd(name, function (err) {
           if (err) {
             job.error(`Missining source file ${name}`, err);

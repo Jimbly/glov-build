@@ -109,7 +109,7 @@ doTestList([
     },
     results_serial: {
       fs_read: 2,
-      fs_stat: 7,
+      fs_stat: 9, // would be ~7 if isUpToDate early-outed
     },
   }, {
     name: 'broken atlas again',
@@ -145,7 +145,7 @@ doTestList([
     },
     results_serial: {
       fs_read: 2,
-      fs_stat: 8,
+      fs_stat: 9,
     },
   }, {
     name: 'fix by re-adding deleted file',
@@ -179,7 +179,7 @@ doTestList([
     results_serial: {
       checks: [atlasLastReset],
       fs_read: 5,
-      fs_stat: 6,
+      fs_stat: 7,
     },
   }]),
 
