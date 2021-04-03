@@ -514,4 +514,42 @@ doTestList([
       jobs: 0,
     },
   }]),
+
+  multiTest({ watch: true, serial: true }, [{
+    name: 'error block: initial',
+    tasks: ['never_runs'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+    },
+    results: {
+      warnings: 0,
+      errors: 1,
+      jobs: 2,
+    },
+  },{
+    name: 'error block: touch non-error',
+    tasks: ['never_runs'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2b',
+      }
+    },
+    outputs: {
+    },
+    results: {
+      warnings: 0,
+      errors: 1,
+    },
+    results_watch: {
+      jobs: 1,
+    },
+    results_serial: {
+      jobs: 2,
+    },
+  }]),
 ]);
