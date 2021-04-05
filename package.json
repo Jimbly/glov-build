@@ -7,6 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "test": "nodemon test/tests/test_watch.js",
+    "test_delays": "nodemon test/tests/test_delays.js",
     "test_taskmod": "nodemon test/tests/test_taskmod.js"
   },
   "dependencies": {

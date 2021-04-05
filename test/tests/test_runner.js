@@ -72,18 +72,17 @@ function testUpdateFS(name, ops) {
     let stat = fs.statSync(full_path);
     fs.utimesSync(full_path, stat.atime, stat.mtime);
   });
+  for (let key in ops.delayed) {
+    let time = Number(key);
+    setTimeout(testUpdateFS.bind(null, `${name}:delayed:${key}`, ops.delayed[key]), time);
+  }
 }
 
 function test(multi_opts, opts, next) {
   let { watch } = multi_opts;
   let {
-    tasks, ops, outputs, name, results,
+    tasks, ops, outputs, name, results, results_abort, phase_delays,
   } = opts;
-  let {
-    checks,
-    warnings, errors, jobs, files_updated, files_deleted,
-    fs_read, fs_write, fs_stat, fs_delete,
-  } = results;
 
   let left = 2;
   let got_err;
@@ -108,20 +107,47 @@ function test(multi_opts, opts, next) {
     }, 55); // > 50ms to avoid throttling in chokidar
   }
 
+  function checkResultsSub(label, stats, result_set) {
+    let {
+      warnings, errors, jobs, files_updated, files_deleted, phase_inputs, phase_deps, phase_run,
+    } = result_set;
+    assert.equal(stats.jobs, jobs || 0, `${label}Unexpected number of jobs ran`);
+    assert.equal(stats.errors, errors || 0, `${label}Unexpected number of errors`);
+    assert.equal(stats.warnings, warnings || 0, `${label}Unexpected number of warnings`);
+    if (files_updated !== undefined) {
+      assert.equal(stats.files_updated, files_updated || 0, `${label}Unexpected number of files_updated`);
+    }
+    if (files_deleted !== undefined) {
+      assert.equal(stats.files_deleted, files_deleted || 0, `${label}Unexpected number of files_deleted`);
+    }
+    if (phase_inputs !== undefined) {
+      assert.equal(stats.phase_inputs, phase_inputs || 0, `${label}Unexpected number of phase_inputs`);
+    }
+    if (phase_deps !== undefined) {
+      assert.equal(stats.phase_deps, phase_deps || 0, `${label}Unexpected number of phase_deps`);
+    }
+    if (phase_run !== undefined) {
+      assert.equal(stats.phase_run, phase_run || 0, `${label}Unexpected number of phase_run`);
+    }
+  }
+
   function checkResults(err) {
     if (err) {
       assert(process.exitCode);
       process.exitCode = 0;
     }
-    assert.equal(gb.stats.jobs, jobs || 0, 'Unexpected number of jobs ran');
-    assert.equal(gb.stats.errors, errors || 0, 'Unexpected number of errors');
-    assert.equal(gb.stats.warnings, warnings || 0, 'Unexpected number of warnings');
-    if (files_updated !== undefined) {
-      assert.equal(gb.stats.files_updated, files_updated || 0, 'Unexpected number of files_updated');
+    if (results_abort) {
+      if (!gb.stats_upon_last_abort) {
+        assert(false, 'Expected stats_upon_last_abort, but found none - abort never happened');
+      } else {
+        checkResultsSub('During abort: ', gb.stats_upon_last_abort, results_abort);
+      }
     }
-    if (files_deleted !== undefined) {
-      assert.equal(gb.stats.files_deleted, files_deleted || 0, 'Unexpected number of files_deleted');
-    }
+    checkResultsSub('', gb.stats, results);
+    let {
+      checks, errors,
+      fs_read, fs_write, fs_stat, fs_delete,
+    } = results;
     if (fs_read !== undefined) {
       assert.equal(gb.files.stats.read, fs_read || 0, 'Unexpected number of fs.read');
     }
@@ -167,6 +193,7 @@ function test(multi_opts, opts, next) {
     }
   }
 
+  gb.setDelays(phase_delays);
   if (gb_running) {
     gb.setActiveTasks(tasks);
     gb.resetStats();

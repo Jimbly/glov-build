@@ -310,6 +310,26 @@ exports.registerTasks = function () {
     deps: ['errors'],
   });
 
+  function copySlow(job, done) {
+    setTimeout(() => {
+      job.out(job.getFile());
+      done();
+    }, 250);
+  }
+  gb.task({
+    name: 'slow_copy',
+    input: 'txt/*.txt',
+    type: gb.SINGLE,
+    func: copySlow,
+  });
+  gb.task({
+    name: 'slow_copy_post',
+    input: 'slow_copy:**',
+    type: gb.SINGLE,
+    func: copySlow,
+    target: 'dev',
+  });
+
 
   gb.task({
     name: 'default',
