@@ -8,14 +8,15 @@
   "scripts": {
     "test": "nodemon test/tests/test_watch.js",
     "test_delays": "nodemon test/tests/test_delays.js",
-    "test_taskmod": "nodemon test/tests/test_taskmod.js"
+    "test_taskmod": "nodemon test/tests/test_taskmod.js",
+    "test_source_target": "nodemon test/tests/test_source_target.js"
   },
   "dependencies": {
     "async": "^3.2.0",
     "chalk": "^4.1.0",
     "chokidar": "^3.5.1",
     "fast-glob": "^3.2.5",
-    "glovjs-async": "0.0.3",
+    "glovjs-async": "0.0.4",
     "micromatch": "^4.0.2",
     "minimist": "^1.2.5",
     "recursive-readdir": "^2.2.2"

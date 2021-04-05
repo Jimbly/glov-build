@@ -236,7 +236,7 @@ function multiTest(opts, list) {
           name: `${key}:${orig_name[ii]}`,
         };
         if (ii === 0 || key !== 'watch') {
-          tasks.push(doRegisterTasks.bind(null, base.register));
+          tasks.push(doRegisterTasks.bind(null, base.register || opts.register));
         }
         tasks.push(test.bind(null, multi_opts, entry));
         if (ii === list.length - 1 || key !== 'watch') {

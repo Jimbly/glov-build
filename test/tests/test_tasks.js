@@ -28,13 +28,18 @@ exports.didRun = function didRun() {
   did_run = false;
 };
 
-exports.registerTasks = function () {
+function configure() {
   gb.configure({
     source: WORK_DIR,
     statedir: STATE_DIR,
     targets,
     log_level: gb.LOG_SILLY,
   });
+}
+exports.configure = configure;
+
+exports.registerTasks = function () {
+  configure();
 
   function copy(job, done) {
     job.out(job.getFile());
