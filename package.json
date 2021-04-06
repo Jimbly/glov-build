@@ -19,7 +19,8 @@
     "glovjs-async": "0.0.4",
     "micromatch": "^4.0.2",
     "minimist": "^1.2.5",
-    "recursive-readdir": "^2.2.2"
+    "recursive-readdir": "^2.2.2",
+    "time-stamp": "^2.2.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.7",
