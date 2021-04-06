@@ -1,4 +1,0 @@
-{
-  "output": "my_atlas.txt",
-  "inputs": [ "txt/file1.txt", "txt/file2.txt"]
-}
