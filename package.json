@@ -1,10 +1,10 @@
 {
   "name": "glovjs-build",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "GLOV.js Build System",
   "main": "index.js",
   "author": "Jimb Esser (https://github.com/Jimbly)",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "test": "nodemon test/tests/test_watch.js",
     "test_delays": "nodemon test/tests/test_delays.js",
