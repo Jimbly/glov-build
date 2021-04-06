@@ -99,7 +99,7 @@ doTestList([
     },
     results: {
       checks: [atlasLastReset],
-      fs_write: 1,
+      fs_write: 0, // actual output unchanged
       fs_delete: 0,
       jobs: 1,
     },
@@ -133,7 +133,7 @@ doTestList([
     },
     results: {
       checks: [atlasLastReset],
-      fs_write: 1,
+      fs_write: 0, // actual output unchanged
       fs_delete: 0,
       errors: 1,
       warnings: 0,
@@ -552,4 +552,40 @@ doTestList([
       jobs: 2,
     },
   }]),
+
+  multiTest({ watch: true, serial: true }, [{
+    name: 'unchanged outputs: initial',
+    tasks: ['concat-reverse'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'concat-reverse.txt': '1elif2elif',
+      },
+    },
+    results: {
+      jobs: 3,
+    },
+  }, {
+    name: 'unchanged outputs: touch',
+    tasks: ['concat-reverse'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'concat-reverse.txt': '1elif2elif',
+      },
+    },
+    results: {
+      jobs: 1,
+    },
+  }]),
+
 ]);
