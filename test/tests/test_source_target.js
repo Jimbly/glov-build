@@ -1,4 +1,4 @@
-// const gb = require('glovjs-build');
+// const gb = require('glov-build');
 const gb = require('../../');
 const { doTestList, multiTest } = require('./test_runner.js');
 

@@ -7,7 +7,7 @@ A build system tailored for JavaScript game development, focused on fast, increm
 
 ### Simple example
 ```javascript
-const gb = require('glovjs-build');
+const gb = require('glov-build');
 
 gb.configure({
   source: 'src',
