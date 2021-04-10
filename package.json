@@ -3,6 +3,10 @@
   "version": "0.0.6",
   "description": "GLOV.js Build System",
   "main": "index.js",
+  "keywords": [
+    "glov",
+    "glovjs"
+  ],
   "author": "Jimb Esser (https://github.com/Jimbly)",
   "license": "MIT",
   "scripts": {
