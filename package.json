@@ -1,6 +1,6 @@
 {
-  "name": "glovjs-build",
-  "version": "0.0.4",
+  "name": "glov-build",
+  "version": "0.0.6",
   "description": "GLOV.js Build System",
   "main": "index.js",
   "author": "Jimb Esser (https://github.com/Jimbly)",
@@ -16,7 +16,7 @@
     "chalk": "^4.1.0",
     "chokidar": "^3.5.1",
     "fast-glob": "^3.2.5",
-    "glovjs-async": "0.0.4",
+    "glov-async": "0.0.1",
     "micromatch": "^4.0.2",
     "minimist": "^1.2.5",
     "recursive-readdir": "^2.2.2",

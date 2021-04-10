@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { asyncEach } = require('glovjs-async');
+const { asyncEach } = require('glov-async');
 // const gb = require('glovjs-build');
 const gb = require('../../');
 const path = require('path');

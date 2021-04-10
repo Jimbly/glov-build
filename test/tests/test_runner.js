@@ -2,7 +2,7 @@ exports.multiTest = multiTest;
 exports.doTestList = doTestList;
 
 const assert = require('assert');
-const { asyncSeries } = require('glovjs-async');
+const { asyncSeries } = require('glov-async');
 const chalk = require('chalk');
 const fs = require('fs');
 // const gb = require('glovjs-build');
