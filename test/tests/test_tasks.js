@@ -337,6 +337,28 @@ exports.registerTasks = function () {
 
 
   gb.task({
+    name: 'output_filename',
+    input: '**',
+    type: gb.SINGLE,
+    version: Date.now(), // Resetting task version each serial run
+    func: function (job, done) {
+      let file = job.getFile();
+      job.out({
+        relative: file.relative,
+        contents: file.relative,
+      });
+      done();
+    },
+  });
+  gb.task({
+    name: 'copy_unchanged',
+    input: 'output_filename:**',
+    target: 'dev',
+    type: gb.SINGLE,
+    func: copy,
+  });
+
+  gb.task({
     name: 'default',
     deps: ['concat', 'copy', 'concat-reverse', 'atlas', 'never_runs', 'does_run'],
   });

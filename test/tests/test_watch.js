@@ -588,4 +588,44 @@ doTestList([
     },
   }]),
 
+  multiTest({ serial: true }, [{
+    name: 'unchanged outputs with dependors: initial',
+    tasks: ['copy_unchanged'],
+    ops: {
+      add: {
+        'file1': 'contents',
+        'file2': 'contents',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1',
+        'file2': 'file2',
+      },
+    },
+    results: {
+      jobs: 4,
+    },
+  }, {
+    // When serial, this was pruning 'file1' from the output because of not re-writing unchanged files
+    name: 'unchanged outputs with dependors: touch',
+    tasks: ['copy_unchanged'],
+    ops: {
+      add: {
+        'file1': 'modified',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1',
+        'file2': 'file2',
+      },
+    },
+    results_serial: {
+      jobs: 2,
+    },
+    results_watch: {
+      jobs: 1,
+    }
+  }]),
 ]);
