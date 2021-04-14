@@ -72,6 +72,14 @@ function testUpdateFS(name, ops) {
     let stat = fs.statSync(full_path);
     fs.utimesSync(full_path, stat.atime, stat.mtime);
   });
+  (ops.func || []).forEach(function (fn) {
+    try {
+      fn(WORK_DIR);
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  });
   for (let key in ops.delayed) {
     let time = Number(key);
     setTimeout(testUpdateFS.bind(null, `${name}:delayed:${key}`, ops.delayed[key]), time);

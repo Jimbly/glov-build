@@ -5,6 +5,14 @@ API Stability: LOW - under active development
 
 A build system tailored for JavaScript game development, focused on fast, incremental builds with live updates of assets in many shapes and sizes.  Created primarily for large projects built on [GLOV.js](https://github.com/Jimbly/glovjs) in order to address the many shortcomings of other options that exhibit themselves as a project grows in size.
 
+### Overview
+
+# Tasks
+A task represents a stage in the build pipeline, and define the inputs and how jobs are run on those inputs (either per-input or on all inputs at once).  Specifically, a task usually defines an input glob and a job function to run on those files.
+
+# Jobs
+A job is a single operation on an input or set of inputs. Individual jobs are only ran if one of their dependencies have changed, and their outputs only trigger dependent tasks to run if the output actually changes.
+
 ### Simple example
 ```javascript
 const gb = require('glov-build');
