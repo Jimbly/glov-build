@@ -27,6 +27,16 @@ function register() {
     target: 'dev',
     func: copy,
   });
+
+  gb.task({
+    name: 'runner',
+    input: 'copy:**',
+    type: gb.ALL,
+    version: Date.now(),
+    func: function (job, done) {
+      done();
+    },
+  });
 }
 
 let opts = { serial: true, watch: true, register };
@@ -143,4 +153,53 @@ doTestList([
       fs_stat: 4,
     },
   }]),
+
+  multiTest({ serial: true, register }, [{
+    name: 'copy to dev',
+    tasks: ['runner'],
+    ops: {
+      add: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+      },
+    },
+    results: {
+      fs_read: 2,
+      fs_write: 2,
+      fs_stat: 2,
+      fs_delete: 0,
+      jobs: 3,
+    },
+  }, {
+    name: 'external delete',
+    tasks: ['runner'],
+    ops: {
+      func: [
+        function () {
+          let full_path = path.join(targets.dev, 'file1.txt');
+          fs.unlinkSync(full_path);
+        },
+      ],
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+      },
+    },
+    results: {
+      fs_delete: 0,
+      fs_stat: 4,
+      fs_write: 1,
+      fs_read: 2, // Really expect 1, but the runner task forces a real read currently
+      jobs: 2,
+    },
+  }]),
+
 ]);
