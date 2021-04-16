@@ -46,6 +46,17 @@ exports.registerTasks = function () {
     done();
   }
 
+  function copyTo(dest) {
+    return function (job, done) {
+      let file = job.getFile();
+      job.out({
+        relative: `${dest}/${file.relative}`,
+        contents: file.contents,
+      });
+      done();
+    };
+  }
+
   function reverse(job, done) {
     let file = job.getFile();
     let buffer = Buffer.from(file.contents);
@@ -353,6 +364,56 @@ exports.registerTasks = function () {
   gb.task({
     name: 'copy_unchanged',
     input: 'output_filename:**',
+    target: 'dev',
+    type: gb.SINGLE,
+    func: copy,
+  });
+
+  gb.task({
+    name: 'simple1dev',
+    input: 'file1',
+    target: 'dev',
+    type: gb.SINGLE,
+    func: copy,
+  });
+  gb.task({
+    name: 'simple2dev',
+    input: 'file2',
+    target: 'dev',
+    type: gb.SINGLE,
+    func: copy,
+  });
+  gb.task({
+    name: 'metadev',
+    deps: ['simple1dev', 'simple2dev'],
+  });
+  gb.task({
+    name: 'from_metadev',
+    input: 'metadev:**',
+    target: 'dev',
+    type: gb.SINGLE,
+    func: copyTo('meta'),
+  });
+
+  gb.task({
+    name: 'simple1',
+    input: 'file1',
+    type: gb.SINGLE,
+    func: copy,
+  });
+  gb.task({
+    name: 'simple2',
+    input: 'file2',
+    type: gb.SINGLE,
+    func: copy,
+  });
+  gb.task({
+    name: 'meta',
+    deps: ['simple1', 'simple2'],
+  });
+  gb.task({
+    name: 'from_meta',
+    input: 'meta:**',
     target: 'dev',
     type: gb.SINGLE,
     func: copy,

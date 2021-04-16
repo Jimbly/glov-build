@@ -628,4 +628,53 @@ doTestList([
       jobs: 1,
     }
   }]),
+
+  multiTest({ serial: true, watch: true }, [{
+    name: 'meta task from simple tasks to dev',
+    tasks: ['from_metadev'],
+    ops: {
+      add: {
+        'file1': 'file1',
+        'file2': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1',
+        'file2': 'file2',
+        'meta/file1': 'file1',
+        'meta/file2': 'file2',
+      },
+    },
+    results: {
+      fs_read: 2,
+      fs_write: 4,
+      fs_stat: 2,
+      jobs: 4,
+    },
+  }]),
+
+  multiTest({ serial: true, watch: true }, [{
+    name: 'meta task from simple tasks to intermediate',
+    tasks: ['from_meta'],
+    ops: {
+      add: {
+        'file1': 'file1',
+        'file2': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1',
+        'file2': 'file2',
+      },
+    },
+    results: {
+      fs_read: 2,
+      fs_write: 4,
+      fs_stat: 2,
+      jobs: 4,
+    },
+  }]),
+
 ]);
