@@ -677,4 +677,70 @@ doTestList([
     },
   }]),
 
+  // Test for loader returning ERR_DOES_NOT_EXIST when file.err should have been cleared
+  multiTest({ watch: true, serial: true }, [{
+    name: 'initial',
+    tasks: ['atlas_from_copy'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "copy_to_int:txt/file1.txt", "copy_to_int:txt/file2.txt"]
+}`,
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2',
+      },
+    },
+    results: { // same for both
+      checks: [
+        atlasLastReset,
+      ],
+      errors: 0,
+      jobs: 2,
+    },
+  }, {
+    name: 'remove file',
+    reset: true,
+    tasks: ['atlas_from_copy'],
+    ops: {
+      del: [
+        'txt/file2.txt',
+      ]
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2', // unchanged
+      },
+    },
+    results: {
+      checks: [
+        atlasLastReset,
+      ],
+      errors: 1,
+      jobs: 1,
+    },
+  },{
+    name: 'add missing file',
+    tasks: ['atlas_from_copy'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 2,
+    },
+  }]),
 ]);

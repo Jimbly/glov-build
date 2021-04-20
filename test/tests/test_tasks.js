@@ -46,6 +46,17 @@ exports.registerTasks = function () {
     done();
   }
 
+  function copyAll2(job, done) {
+    let files = job.getFiles();
+    if (files.length !== 2) {
+      return done('Expected 2 files');
+    }
+    for (let ii = 0; ii < files.length; ++ii) {
+      job.out(files[ii]);
+    }
+    done();
+  }
+
   function copyTo(dest) {
     return function (job, done) {
       let file = job.getFile();
@@ -281,6 +292,21 @@ exports.registerTasks = function () {
     input: 'atlas/*.json',
     type: gb.SINGLE,
     target: 'dev',
+    func: atlas,
+  });
+
+  gb.task({
+    name: 'copy_to_int',
+    input: 'txt/*.txt',
+    type: gb.ALL,
+    func: copyAll2,
+  });
+  gb.task({
+    name: 'atlas_from_copy',
+    input: 'atlas/*.json',
+    type: gb.SINGLE,
+    target: 'dev',
+    deps: ['copy_to_int'],
     func: atlas,
   });
 

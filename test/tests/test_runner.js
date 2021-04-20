@@ -243,11 +243,18 @@ function multiTest(opts, list) {
           results,
           name: `${key}:${orig_name[ii]}`,
         };
-        if (ii === 0 || key !== 'watch') {
+        if (ii === 0 || key !== 'watch' || base.reset) {
           tasks.push(doRegisterTasks.bind(null, base.register || opts.register));
         }
-        tasks.push(test.bind(null, multi_opts, entry));
-        if (ii === list.length - 1 || key !== 'watch') {
+        let multi_opts_use = multi_opts;
+        if (list[ii+1] && list[ii+1].reset) {
+          multi_opts_use = {
+            ...multi_opts,
+            watch: false,
+          };
+        }
+        tasks.push(test.bind(null, multi_opts_use, entry));
+        if (ii === list.length - 1 || key !== 'watch' || list[ii+1] && list[ii+1].reset) {
           tasks.push(testShutdown);
         }
       }
