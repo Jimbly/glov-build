@@ -188,7 +188,7 @@ function test(multi_opts, opts, next) {
       for (let ii = 0; ii < files.length; ++ii) {
         let full_path = forwardSlashes(files[ii]);
         let key = forwardSlashes(path.relative(target_dir, full_path));
-        assert(target_output[key], `Found unexpected ${target}:${key}`);
+        assert(target_output[key] !== undefined, `Found unexpected ${target}:${key}`);
         let found = fs.readFileSync(full_path, 'utf8');
         assert.equal(found, target_output[key], `Mismatched data in ${target}:${key}`);
         found_keys[key] = true;

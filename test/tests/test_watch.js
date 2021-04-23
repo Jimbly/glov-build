@@ -679,7 +679,7 @@ doTestList([
 
   // Test for loader returning ERR_DOES_NOT_EXIST when file.err should have been cleared
   multiTest({ watch: true, serial: true }, [{
-    name: 'initial',
+    name: 'removing file: initial',
     tasks: ['atlas_from_copy'],
     ops: {
       add: {
@@ -705,7 +705,7 @@ doTestList([
       jobs: 2,
     },
   }, {
-    name: 'remove file',
+    name: 'removing file: remove file',
     reset: true,
     tasks: ['atlas_from_copy'],
     ops: {
@@ -741,6 +741,59 @@ doTestList([
     results: {
       errors: 0,
       jobs: 2,
+    },
+  }]),
+
+  // Case sensitivity tests
+  multiTest({ watch: true, serial: true }, [{
+    name: 'case sensitivity: intermediate',
+    tasks: ['atlas_from_copy'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "copy_to_int:txt/FiLe1.txt", "copy_to_int:TXT/file2.txt"]
+}`,
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': '',
+      },
+    },
+    results: { // same for both
+      checks: [
+        atlasLastReset,
+      ],
+      errors: 2,
+      jobs: 2,
+    },
+  }]),
+
+  multiTest({ watch: true, serial: true }, [{
+    name: 'case sensitivity: source',
+    tasks: ['atlas'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "txt/FiLe1.txt", "TXT/file1.txt"]
+}`,
+        'txt/file1.txt': 'file1',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': '',
+      },
+    },
+    results: { // same for both
+      errors: 2,
+      jobs: 1,
     },
   }]),
 ]);
