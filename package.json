@@ -8,6 +8,10 @@
     "glovjs"
   ],
   "author": "Jimb Esser (https://github.com/Jimbly)",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Jimbly/glov-build.git"
+  },
   "license": "MIT",
   "scripts": {
     "test": "nodemon test/tests/test_watch.js",
