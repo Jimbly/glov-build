@@ -796,4 +796,67 @@ doTestList([
       jobs: 1,
     },
   }]),
+
+  // Test runner was previously clearing process.exitCode here
+  // Build was previously not re-outputting old errors here
+  multiTest({ watch: true, serial: true }, [{
+    name: 'error and spurious and unrelated: init',
+    tasks: ['errors', 'simple1dev'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'file1': 'file1simple',
+      },
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1simple',
+      },
+    },
+    results: {
+      jobs: 2,
+      errors: 1,
+    },
+  },{
+    name: 'error and spurious and unrelated: spurious',
+    tasks: ['errors', 'simple1dev'],
+    ops: {
+      spurious: [
+        'txt/file1.txt',
+      ]
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1simple',
+      },
+    },
+    results_watch: {
+      jobs: 0,
+      errors: 0,
+    },
+    results_serial: {
+      jobs: 1, // re-runs errored job
+      errors: 1, // re-outputs errors
+    },
+  }, {
+    name: 'error and spurious and unrelated: unrelated',
+    tasks: ['errors', 'simple1dev'],
+    ops: {
+      add: {
+        'file1': 'file1simpleB',
+      },
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1simpleB',
+      },
+    },
+    results: {
+      errors: 1,
+      jobs: 1,
+    },
+    results_serial: {
+      jobs: 2,
+    },
+  }]),
 ]);

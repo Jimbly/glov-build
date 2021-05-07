@@ -41,6 +41,7 @@ function testShutdown(next) {
   assert(gb_running);
   gb_running = false;
   gb.stop(next);
+  process.exitCode = 0;
 }
 
 function testReset(next) {
@@ -142,7 +143,8 @@ function test(multi_opts, opts, next) {
   function checkResults(err) {
     if (err) {
       assert(process.exitCode);
-      process.exitCode = 0;
+    } else {
+      assert(!process.exitCode);
     }
     if (results_abort) {
       if (!gb.stats_upon_last_abort) {
@@ -172,7 +174,7 @@ function test(multi_opts, opts, next) {
     if (errors) {
       assert(err, 'Expected build to end in error');
     } else {
-      assert(!err, 'Expected build to end without error');
+      assert(!err || err.indexOf('spurious') !== -1, 'Expected build to end without error');
     }
     if (checks) {
       for (let ii = 0; ii < checks.length; ++ii) {
