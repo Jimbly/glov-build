@@ -1,6 +1,6 @@
 {
   "name": "glov-build",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "GLOV.js Build System",
   "main": "index.js",
   "keywords": [
@@ -18,7 +18,8 @@
     "test_delays": "nodemon test/tests/test_delays.js",
     "test_taskmod": "nodemon test/tests/test_taskmod.js",
     "test_source_target": "nodemon test/tests/test_source_target.js",
-    "test_touched_output": "nodemon test/tests/test_touched_output.js"
+    "test_touched_output": "nodemon test/tests/test_touched_output.js",
+    "test_locked_file": "nodemon test/tests/test_locked_file.js"
   },
   "dependencies": {
     "chalk": "^4.1.0",
@@ -31,6 +32,7 @@
     "time-stamp": "^2.2.0"
   },
   "devDependencies": {
+    "fs-ext": "^2.0.0",
     "nodemon": "^2.0.7",
     "recursive-readdir-synchronous": "0.0.4",
     "rimraf": "^3.0.2"
