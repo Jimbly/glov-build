@@ -193,10 +193,11 @@ exports.registerTasks = function () {
       user_data.atlas_data = input_data;
 
       asyncEach(inputs, (name, next) => {
-        job.depAdd(name, function (err) {
-          if (err) {
-            job.error(`Missining source file ${name}`, err);
-          }
+        job.depAdd(name, function (/*err, f*/) {
+          // Not doing this here, will error generically in doAtlas
+          // if (err) {
+          //   job.error(f, `Missing source file ${name}: ${err}`);
+          // }
           next();
         });
       }, doAtlas);
