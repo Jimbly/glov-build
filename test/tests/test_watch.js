@@ -859,4 +859,64 @@ doTestList([
       jobs: 2,
     },
   }]),
+
+  // This was erroring because isUpToDate was forcing jobs to re-run if any dep errored
+  multiTest({ watch: true, serial: true }, [{
+    name: 'expected missing file',
+    tasks: ['atlas', 'copy'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "txt/file1.txt", "expected_missing"]
+}`,
+        'txt/file1.txt': 'file1',
+      }
+    },
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1',
+        'my_atlas.txt': 'file1',
+      },
+    },
+    results: {
+      checks: [atlasLastReset],
+      fs_read: 2,
+      fs_write: 2,
+      fs_stat: 3,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 2,
+    },
+  }, {
+    name: 'expected missing file: unrelated change',
+    tasks: ['atlas', 'copy'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+        'my_atlas.txt': 'file1',
+      },
+    },
+    results: {
+      fs_read: 1,
+      fs_write: 1,
+      fs_stat: 1,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 1,
+    },
+    results_serial: {
+      fs_stat: 6,
+    },
+  }]),
+
 ]);

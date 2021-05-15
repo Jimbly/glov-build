@@ -150,7 +150,9 @@ exports.registerTasks = function () {
           continue;
         }
         if (!f.contents) {
-          job.error(`Missing source file ${f.relative}: ${f.err}`);
+          if (f.relative.indexOf('expected_missing') === -1) {
+            job.error(`Missing source file ${f.relative}: ${f.err}`);
+          }
           delete user_data.files[f.relative];
           continue;
         }
