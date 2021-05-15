@@ -919,4 +919,87 @@ doTestList([
     },
   }]),
 
+  // This was erroring because sourcing from a task which output to a target was
+  // not getting file change notifications propagated with the right key to get
+  // added into the dynamic dep gathering.
+  multiTest({ watch: true, serial: true }, [{
+    name: 'execish',
+    tasks: ['execish'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+      }
+    },
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1',
+      },
+    },
+    results: {
+      checks: [didRun],
+      fs_read: 1,
+      fs_write: 1,
+      fs_stat: 1,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 2,
+    },
+  }, {
+    name: 'execish: modify file',
+    tasks: ['execish'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1b',
+      }
+    },
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1b',
+      },
+    },
+    results: {
+      checks: [didRun],
+      fs_read: 1,
+      fs_write: 1,
+      fs_stat: 0,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 2,
+    },
+    results_serial: {
+      fs_read: 1,
+      fs_stat: 2,
+    },
+  }, {
+    name: 'execish: add new file',
+    tasks: ['execish'],
+    ops: {
+      add: {
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1b',
+        'txt/file2.txt': 'file2',
+      },
+    },
+    results: {
+      checks: [didRun],
+      fs_read: 1,
+      fs_write: 1,
+      fs_stat: 1,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 2,
+    },
+    results_serial: {
+      fs_read: 2,
+      fs_stat: 3,
+    },
+  }]),
+
 ]);

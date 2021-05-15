@@ -449,6 +449,17 @@ exports.registerTasks = function () {
   });
 
   gb.task({
+    name: 'execish',
+    input: 'copy:**',
+    type: gb.ALL,
+    func: function (job, done) {
+      did_run = true;
+      job.log('Execish running!');
+      done();
+    },
+  });
+
+  gb.task({
     name: 'default',
     deps: ['concat', 'copy', 'concat-reverse', 'atlas', 'never_runs', 'does_run'],
   });
