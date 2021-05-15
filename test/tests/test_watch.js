@@ -652,6 +652,27 @@ doTestList([
       fs_stat: 2,
       jobs: 4,
     },
+  }, {
+    name: 'meta task from simple tasks to dev, dynamic change',
+    tasks: ['from_metadev'],
+    ops: {
+      add: {
+        'file1': 'file1b',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1b',
+        'file2': 'file2',
+        'meta/file1': 'file1b',
+        'meta/file2': 'file2',
+      },
+    },
+    results: {
+      fs_read: 1,
+      fs_write: 2,
+      jobs: 2,
+    },
   }]),
 
   multiTest({ serial: true, watch: true }, [{
