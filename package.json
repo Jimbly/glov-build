@@ -1,6 +1,6 @@
 {
   "name": "glov-build",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "GLOV.js Build System",
   "main": "index.js",
   "keywords": [
@@ -19,7 +19,8 @@
     "test_taskmod": "nodemon test/tests/test_taskmod.js",
     "test_source_target": "nodemon test/tests/test_source_target.js",
     "test_touched_output": "nodemon test/tests/test_touched_output.js",
-    "test_locked_file": "nodemon test/tests/test_locked_file.js"
+    "test_locked_file": "nodemon test/tests/test_locked_file.js",
+    "test_idle_init": "nodemon test/tests/test_idle_init.js"
   },
   "dependencies": {
     "chalk": "^4.1.0",

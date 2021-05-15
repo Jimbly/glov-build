@@ -1,5 +1,6 @@
 exports.multiTest = multiTest;
 exports.doTestList = doTestList;
+exports.testShutdown = testShutdown;
 
 const assert = require('assert');
 const { asyncSeries } = require('glov-async');
@@ -256,7 +257,7 @@ function multiTest(opts, list) {
           };
         }
         tasks.push(test.bind(null, multi_opts_use, entry));
-        if (ii === list.length - 1 || key !== 'watch' || list[ii + 1] && list[ii + 1].reset) {
+        if (!opts.no_stop && (ii === list.length - 1 || key !== 'watch' || list[ii + 1] && list[ii + 1].reset)) {
           tasks.push(testShutdown);
         }
       }
@@ -272,7 +273,7 @@ function multiTest(opts, list) {
   };
 }
 
-function doTestList(list) {
+function doTestList(list, next) {
   function onExit() {
     assert(false, 'Process exited before all tests finished');
   }
@@ -281,6 +282,9 @@ function doTestList(list) {
     process.removeListener('exit', onExit);
     if (err) {
       throw err;
+    }
+    if (next) {
+      next();
     }
   });
 }
