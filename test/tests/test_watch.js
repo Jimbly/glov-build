@@ -1002,4 +1002,47 @@ doTestList([
     },
   }]),
 
+  multiTest({ serial: true }, [{
+    name: 'execish2: do not read',
+    tasks: ['execish2'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+      }
+    },
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1',
+      },
+    },
+    results: {
+      checks: [didRun],
+      fs_read: 1,
+      fs_write: 1,
+      fs_stat: 1,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 2,
+    },
+  }, {
+    name: 'execish2: do not read: no change',
+    tasks: ['execish2'],
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1',
+      },
+    },
+    results: {
+      checks: [didRun],
+      fs_read: 0,
+      fs_write: 0,
+      fs_stat: 2,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 1,
+    },
+  }]),
+
 ]);

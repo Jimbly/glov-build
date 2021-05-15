@@ -1,7 +1,7 @@
 GLOV.js Build System
 ====================
 
-API Stability: LOW - under active development
+API Stability: MEDIUM - under active development, but used in some production projects
 
 A build system tailored for JavaScript game development, focused on fast, incremental builds with live updates of assets in many shapes and sizes.  Created primarily for large projects built on [GLOV.js](https://github.com/Jimbly/glovjs) in order to address the many shortcomings of other options that exhibit themselves as a project grows in size.
 
