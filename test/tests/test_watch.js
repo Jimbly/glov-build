@@ -1066,4 +1066,71 @@ doTestList([
     },
   }]),
 
+  multiTest({ watch: true, serial: true }, [{
+    name: 'removing file after restart: initial',
+    tasks: ['atlas'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "txt/file1.txt", "txt/file2.txt"]
+}`,
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2',
+      },
+    },
+    results: {
+      checks: [
+        atlasLastReset,
+      ],
+      errors: 0,
+      jobs: 1,
+    },
+  }, {
+    name: 'removing file after restart: spurious',
+    tasks: ['atlas'],
+    reset: true, // start up, run all tasks, but don't do anything
+    ops: {
+      spurious: [
+        'txt/file2.txt',
+      ],
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 0,
+    },
+  }, {
+    // then dynamic update that removes the file
+    name: 'removing file after restart: remove file',
+    tasks: ['atlas'],
+    ops: {
+      del: [
+        'txt/file2.txt',
+      ]
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1',
+      },
+    },
+    results: {
+      checks: [
+        atlasLastReset,
+      ],
+      errors: 1,
+      jobs: 1,
+    },
+  }]),
+
 ]);
