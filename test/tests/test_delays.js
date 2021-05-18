@@ -205,4 +205,62 @@ doTestList([
     },
   }]),
 
+  multiTest({ watch: true }, [{
+    name: 'delete first-B while running first-A',
+    tasks: ['slow_copy_post'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      },
+      delayed: {
+        125: {
+          del: [
+            'txt/file2.txt'
+          ],
+        },
+      },
+    },
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1',
+      },
+    },
+    results: {
+      jobs: 2,
+    },
+    results_abort: {
+      jobs: 1,
+    },
+  }]),
+
+  multiTest({ watch: true }, [{
+    name: 'delete first-A while running first-A',
+    tasks: ['slow_copy_post'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      },
+      delayed: {
+        125: {
+          del: [
+            'txt/file1.txt'
+          ],
+        },
+      },
+    },
+    outputs: {
+      dev: {
+        'txt/file2.txt': 'file2',
+      },
+    },
+    results: {
+      jobs: 3,
+    },
+    results_abort: {
+      jobs: 1,
+    },
+  }]),
+
 ]);
