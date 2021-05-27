@@ -1133,4 +1133,60 @@ doTestList([
     },
   }]),
 
+  multiTest({ watch: true, serial: true }, [{
+    name: 'removing file from ALL task after restart: initial',
+    tasks: ['concat'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'file1file2',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 1,
+    },
+  }, {
+    name: 'removing file from ALL task after restart: spurious',
+    tasks: ['concat'],
+    reset: true, // start up, run all tasks, but don't do anything
+    ops: {
+      spurious: [
+        'txt/file2.txt',
+      ],
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'file1file2',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 0,
+    },
+  }, {
+    // then dynamic update that removes the file
+    name: 'removing file from ALL task after restart: remove file',
+    tasks: ['concat'],
+    ops: {
+      del: [
+        'txt/file2.txt',
+      ]
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'file1',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 1,
+    },
+  }]),
+
 ]);
