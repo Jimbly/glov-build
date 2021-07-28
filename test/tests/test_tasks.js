@@ -46,6 +46,15 @@ exports.registerTasks = function () {
     done();
   }
 
+  function copyToRoot(job, done) {
+    let file = job.getFile();
+    job.out({
+      relative: path.basename(file.relative),
+      contents: file.contents,
+    });
+    done();
+  }
+
   function copyAll2(job, done) {
     let files = job.getFiles();
     if (files.length !== 2) {
@@ -262,6 +271,14 @@ exports.registerTasks = function () {
     type: gb.SINGLE,
     target: 'dev',
     func: copy,
+  });
+
+  gb.task({
+    name: 'copy_to_root',
+    input: '**.txt',
+    type: gb.SINGLE,
+    target: 'dev',
+    func: copyToRoot,
   });
 
   gb.task({

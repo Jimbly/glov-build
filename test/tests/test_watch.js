@@ -1189,4 +1189,102 @@ doTestList([
     },
   }]),
 
+  multiTest({ watch: true, serial: true }, [{
+    name: 'copy to root: initial',
+    tasks: ['copy_to_root'],
+    ops: {
+      add: {
+        'dir1/file1.txt': 'file1',
+        'dir1/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 2,
+    },
+  }, {
+    name: 'copy to root: new duplicate',
+    tasks: ['copy_to_root'],
+    ops: {
+      add: {
+        'dir1/file3.txt': 'file3a',
+        'dir2/file3.txt': 'file3b',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+        'file3.txt': 'file3a', // not guaranteed? not important for what we're testing, though # of jobs ran will change
+      },
+    },
+    results: {
+      errors: 1,
+      jobs: 2,
+    },
+  }, {
+    name: 'copy to root: remove duplicate',
+    tasks: ['copy_to_root'],
+    ops: {
+      del: [
+        'dir1/file3.txt',
+      ],
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+        'file3.txt': 'file3b',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 1,
+    },
+  }, {
+    name: 'copy to root: incremental duplicate',
+    tasks: ['copy_to_root'],
+    ops: {
+      add: {
+        'dir2/file1.txt': 'file1',
+      },
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+        'file3.txt': 'file3b',
+      },
+    },
+    results: {
+      errors: 1,
+      jobs: 1,
+    },
+  }, {
+    name: 'copy to root: remove orig duplicate',
+    tasks: ['copy_to_root'],
+    ops: {
+      del: [
+        'dir1/file1.txt',
+      ],
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+        'file3.txt': 'file3b',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 1,
+    },
+  }]),
+
 ]);
