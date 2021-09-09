@@ -42,6 +42,7 @@ doTestList([
       errors: 1,
       warnings: 1,
       jobs: 12,
+      phase_run: 8,
     },
   }, {
     name: 'delete 1',
@@ -65,6 +66,7 @@ doTestList([
       fs_delete: 2,
       jobs: 3,
       errors: 1,
+      phase_run: 5,
     },
     results_watch: {
       checks: [atlasLastNotReset],
@@ -106,10 +108,12 @@ doTestList([
     results_watch: {
       fs_read: 1,
       fs_stat: 0,
+      phase_run: 1,
     },
     results_serial: {
       fs_read: 2,
       fs_stat: 9, // would be ~7 if isUpToDate early-outed
+      phase_run: 5,
     },
   }, {
     name: 'broken atlas again',
