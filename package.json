@@ -15,6 +15,7 @@
   "license": "MIT",
   "scripts": {
     "test": "nodemon test/tests/test_watch.js",
+    "test_async": "nodemon test/tests/test_async.js",
     "test_delays": "nodemon test/tests/test_delays.js",
     "test_taskmod": "nodemon test/tests/test_taskmod.js",
     "test_source_target": "nodemon test/tests/test_source_target.js",

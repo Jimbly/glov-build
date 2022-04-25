@@ -28,12 +28,13 @@ exports.didRun = function didRun() {
   did_run = false;
 };
 
-function configure() {
+function configure(params) {
   gb.configure({
     source: WORK_DIR,
     statedir: STATE_DIR,
     targets,
     log_level: gb.LOG_SILLY,
+    ...(params || {}),
   });
 }
 exports.configure = configure;
