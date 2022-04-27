@@ -1,0 +1,57 @@
+//json5
+{
+  "folders": [
+    {
+      "folder_exclude_patterns": [
+        "node_modules",
+      ],
+      "file_exclude_patterns": ["package-lock.json", ".*", "*.sublime-project"],
+      "path": "./test/tests"
+    },
+    {
+      "folder_exclude_patterns": [
+        "node_modules",
+      ],
+      "file_exclude_patterns": ["package-lock.json", ".*", "*.sublime-project"],
+      "path": "../glov-build-babel"
+    },
+    {
+      "folder_exclude_patterns": [
+        "node_modules",
+        "test",
+      ],
+      "file_exclude_patterns": ["package-lock.json", ".*", "*.sublime-project"],
+      "path": "../glov-build-browserify"
+    },
+    {
+      "folder_exclude_patterns": [
+        "node_modules",
+      ],
+      "file_exclude_patterns": ["package-lock.json", ".*", "*.sublime-project"],
+      "path": "../glov-build-concat"
+    },
+    {
+      "folder_exclude_patterns": [
+        "node_modules",
+      ],
+      "file_exclude_patterns": ["package-lock.json", ".*", "*.sublime-project"],
+      "path": "../glov-build-preresolve"
+    },
+    {
+      "folder_exclude_patterns": [
+        "node_modules",
+      ],
+      "file_exclude_patterns": ["package-lock.json", ".*", "*.sublime-project"],
+      "path": "../glov-build-sourcemap"
+    },
+    {
+      "path": "../glovjs/build"
+    },
+    {
+      "path": "../glovjs-inky-spire/build"
+    },
+    {
+      "path": "C:/src/frvr/worlds/build"
+    },
+  ]
+}

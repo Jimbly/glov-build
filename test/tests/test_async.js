@@ -1,3 +1,6 @@
+exports.register = register;
+exports.elapsedRange = elapsedRange;
+
 const assert = require('assert');
 // const gb = require('glov-build');
 const gb = require('../../');
@@ -24,12 +27,14 @@ function delayCPU(delay) {
 }
 
 
-function register(async) {
+function register(async, num_jobs) {
   configure({
-    // parallel: {
-    //   tasks: 1,
-    //   jobs: 4,
-    // },
+    parallel: { // current defaults, but assumed for these tests
+      tasks: 1,
+      tasks_async: 8,
+      jobs: num_jobs || 4,
+      jobs_async: 8,
+    },
   });
 
   gb.task({
@@ -105,7 +110,25 @@ const io_ops_x2 = {
   },
 };
 
-const cpu_ops_x2 = {
+const io_ops_x2a = {
+  tasks: ['async'],
+  ops: {
+    add: {
+      'io1sA/f': 'f',
+      'io1sA/f2': 'f2',
+    },
+    func: [startTiming],
+  },
+  outputs: {
+    dev: {
+      'io1sA/f': 'f',
+      'io1sA/f2': 'f2',
+    },
+  },
+};
+
+
+const cpu_ops_x2 = exports.cpu_ops_x2 = {
   tasks: ['async'],
   ops: {
     add: {
@@ -123,6 +146,27 @@ const cpu_ops_x2 = {
 };
 
 doTestList([
+
+  // should be limited to the max of 1 job
+  multiTest({ watch: true, register: register.bind(null, gb.ASYNC_DEFAULT, 1) }, [{
+    name: 'IO 1s x2a 1 job ',
+    ...io_ops_x2a,
+    results: {
+      checks: [elapsedRange(2000, 2500)],
+      jobs: 2,
+    },
+  }]),
+
+  // should bypass the limit of 1 job
+  multiTest({ watch: true, register: register.bind(null, gb.ASYNC_INPROC, 1) }, [{
+    name: 'IO 1s x2a async, 1 job (bypassed)',
+    ...io_ops_x2a,
+    results: {
+      checks: [elapsedRange(1000, 1500)],
+      jobs: 2,
+    },
+  }]),
+
   multiTest({ watch: true, register: register.bind(null, gb.ASYNC_DEFAULT) }, [{
     name: 'IO 1s x2',
     ...io_ops_x2,
