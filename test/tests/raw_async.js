@@ -1,9 +1,12 @@
+// Note: some manual cleaning of test/work/ currently required before running these
+
+const assert = require('assert');
 // const gb = require('glov-build');
 const gb = require('../../');
 const fs = require('fs');
 const path = require('path');
 
-const { configure, WORK_DIR } = require('./test_tasks.js');
+const { configure, STATE_DIR, WORK_DIR, atlas, targets } = require('./test_tasks.js');
 
 // Test inputs setup
 function writeFile(key, data) {
@@ -16,17 +19,45 @@ function writeFile(key, data) {
 }
 
 if (!gb.isFork()) {
-  writeFile('cpu1sA/a', `f${Math.random()}`);
+  //writeFile('cpu1sA/a', `f${Math.random()}`);
   //writeFile('cpu1sB/f', 'f');
 
-  if ('test abort') {
+  if (!'test abort') {
     writeFile('cpu1sA/a', `f${Math.random()}`);
     writeFile('cpu1sA/b', `f${Math.random()}`);
     setTimeout(function () {
       writeFile('cpu1sA/a', `f${Math.random()}`);
     }, 500);
   }
-
+  if ('test atlas') {
+    // Manual clean
+    let out_file = path.join(targets.dev, 'my_atlas.txt');
+    if (fs.existsSync(out_file)) {
+      fs.unlinkSync(out_file);
+    }
+    let atlas_state = path.join(STATE_DIR, 'tasks/atlas/state.json');
+    if (fs.existsSync(atlas_state)) {
+      fs.unlinkSync(atlas_state);
+    }
+    // Do atlas
+    writeFile('atlas/atlas1.json', `{
+  "output": "my_atlas.txt",
+  "inputs": [ "txt/file1.txt", "txt/file2.txt"]
+}`);
+    writeFile('txt/file1.txt', 'file1');
+    writeFile('txt/file2.txt', 'file2');
+    setTimeout(function () {
+      let data = fs.readFileSync(out_file, 'utf8');
+      assert.equal(data, 'file1file2');
+      console.log('Data checks out 1/2');
+      writeFile('txt/file1.txt', 'file1b');
+    }, 500);
+    setTimeout(function () {
+      let data = fs.readFileSync(out_file, 'utf8');
+      assert.equal(data, 'file1bfile2');
+      console.log('Data checks out 2/2');
+    }, 1000);
+  }
 }
 
 
@@ -72,8 +103,16 @@ gb.task({
   version: Date.now(),
 });
 gb.task({
+  name: 'atlas',
+  input: 'atlas/*.json',
+  type: gb.SINGLE,
+  target: 'dev',
+  async: gb.ASYNC_FORK,
+  func: atlas,
+  version: Date.now(),
+});
+gb.task({
   name: 'default',
-  deps: ['cpu1sA', 'cpu1sB'],
+  deps: ['atlas', 'cpu1sA', 'cpu1sB'],
 });
 gb.go();
-

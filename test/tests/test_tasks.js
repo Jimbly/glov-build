@@ -220,6 +220,7 @@ function atlas(job, done) {
     doAtlas();
   }
 }
+exports.atlas = atlas;
 
 function multiout(job, done) {
   let input = job.getFile();
