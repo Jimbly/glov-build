@@ -16,8 +16,17 @@ function writeFile(key, data) {
 }
 
 if (!gb.isFork()) {
-  writeFile('cpu1sA/f', `f${Math.random()}`);
+  writeFile('cpu1sA/a', `f${Math.random()}`);
   //writeFile('cpu1sB/f', 'f');
+
+  if ('test abort') {
+    writeFile('cpu1sA/a', `f${Math.random()}`);
+    writeFile('cpu1sA/b', `f${Math.random()}`);
+    setTimeout(function () {
+      writeFile('cpu1sA/a', `f${Math.random()}`);
+    }, 500);
+  }
+
 }
 
 
@@ -41,6 +50,7 @@ configure({
     jobs: 4,
     jobs_async: 8,
   },
+  watch: true,
 });
 
 gb.task({
@@ -66,3 +76,4 @@ gb.task({
   deps: ['cpu1sA', 'cpu1sB'],
 });
 gb.go();
+
