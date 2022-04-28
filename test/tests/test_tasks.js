@@ -39,232 +39,232 @@ function configure(params) {
 }
 exports.configure = configure;
 
-exports.registerTasks = function () {
-  configure();
+function copy(job, done) {
+  job.out(job.getFile());
+  done();
+}
 
-  function copy(job, done) {
-    job.out(job.getFile());
-    done();
+function copyToRoot(job, done) {
+  let file = job.getFile();
+  job.out({
+    relative: path.basename(file.relative),
+    contents: file.contents,
+  });
+  done();
+}
+
+function copyAll2(job, done) {
+  let files = job.getFiles();
+  if (files.length !== 2) {
+    return done('Expected 2 files');
   }
+  for (let ii = 0; ii < files.length; ++ii) {
+    job.out(files[ii]);
+  }
+  done();
+}
 
-  function copyToRoot(job, done) {
+function copyTo(dest) {
+  return function (job, done) {
     let file = job.getFile();
     job.out({
-      relative: path.basename(file.relative),
+      relative: `${dest}/${file.relative}`,
       contents: file.contents,
     });
     done();
-  }
+  };
+}
 
-  function copyAll2(job, done) {
+function reverse(job, done) {
+  let file = job.getFile();
+  let buffer = Buffer.from(file.contents);
+  for (let ii = 0; ii < buffer.length / 2; ++ii) {
+    let t = buffer[ii];
+    buffer[ii] = buffer[buffer.length - 1 - ii];
+    buffer[buffer.length - 1 - ii] = t;
+  }
+  job.out({
+    relative: file.relative,
+    contents: buffer,
+  });
+  done();
+}
+
+function toContents(f) {
+  return f.contents;
+}
+
+function concatSimple(opts) {
+  return function (job, done) {
     let files = job.getFiles();
-    if (files.length !== 2) {
-      return done('Expected 2 files');
-    }
-    for (let ii = 0; ii < files.length; ++ii) {
-      job.out(files[ii]);
-    }
-    done();
-  }
-
-  function copyTo(dest) {
-    return function (job, done) {
-      let file = job.getFile();
-      job.out({
-        relative: `${dest}/${file.relative}`,
-        contents: file.contents,
-      });
-      done();
-    };
-  }
-
-  function reverse(job, done) {
-    let file = job.getFile();
-    let buffer = Buffer.from(file.contents);
-    for (let ii = 0; ii < buffer.length / 2; ++ii) {
-      let t = buffer[ii];
-      buffer[ii] = buffer[buffer.length - 1 - ii];
-      buffer[buffer.length - 1 - ii] = t;
-    }
-    job.out({
-      relative: file.relative,
-      contents: buffer,
-    });
-    done();
-  }
-
-  function toContents(f) {
-    return f.contents;
-  }
-
-  function concatSimple(opts) {
-    return function (job, done) {
-      let files = job.getFiles();
-      let buffer = Buffer.concat(files.filter(toContents).map(toContents));
-      job.out({
-        relative: opts.output,
-        contents: buffer,
-      });
-      done();
-    };
-  }
-
-  function cmpName(a, b) {
-    return a.relative < b.relative ? -1 : 1;
-  }
-
-  function concatCachedInternal(opts, job, done) {
-    let updated_files = job.getFilesUpdated();
-    let user_data = job.getUserData();
-    user_data.files = user_data.files || {};
-
-    for (let ii = 0; ii < updated_files.length; ++ii) {
-      let f = updated_files[ii];
-      if (opts.skip === f.relative) {
-        continue;
-      }
-      if (!f.contents) {
-        delete user_data.files[f.relative];
-      } else {
-        user_data.files[f.relative] = f;
-      }
-    }
-    let files = Object.values(user_data.files).sort(cmpName);
-
-    // Note: above is equivalent to `let files = job.getFiles()`, since we're not actually caching anything
-
-    let buffer = Buffer.concat(files.map(toContents));
+    let buffer = Buffer.concat(files.filter(toContents).map(toContents));
     job.out({
       relative: opts.output,
       contents: buffer,
     });
     done();
-  }
+  };
+}
 
-  function concatCached(opts) {
-    return concatCachedInternal.bind(null, opts);
-  }
+function cmpName(a, b) {
+  return a.relative < b.relative ? -1 : 1;
+}
 
-  function atlas(job, done) {
-    let input = job.getFile();
-    let user_data = job.getUserData();
-    let input_data;
+function concatCachedInternal(opts, job, done) {
+  let updated_files = job.getFilesUpdated();
+  let user_data = job.getUserData();
+  user_data.files = user_data.files || {};
 
-    function doAtlas() {
-      let updated_files = job.getFilesUpdated();
-      user_data.files = user_data.files || {};
-
-      for (let ii = 0; ii < updated_files.length; ++ii) {
-        let f = updated_files[ii];
-        if (f === input) {
-          continue;
-        }
-        if (!f.contents) {
-          if (f.relative.indexOf('expected_missing') === -1) {
-            job.error(`Missing source file ${f.relative}: ${f.err}`);
-          }
-          delete user_data.files[f.relative];
-          continue;
-        }
-        if (f.contents.toString().indexOf('warn') !== -1) {
-          job.warn(f, `Warning on ${f.relative}`);
-        }
-        if (f.contents.toString().indexOf('error') !== -1) {
-          job.error(f, `Error on ${f.relative}`);
-        }
-        user_data.files[f.relative] = f;
-      }
-      let files = Object.values(user_data.files).sort(cmpName);
-
-      let buffer = Buffer.concat(files.map(toContents));
-      job.out({
-        relative: input_data.output,
-        contents: buffer,
-      });
-      done();
+  for (let ii = 0; ii < updated_files.length; ++ii) {
+    let f = updated_files[ii];
+    if (opts.skip === f.relative) {
+      continue;
     }
-
-    if (job.isFileUpdated(input)) {
-      atlas_last_reset = true;
-      job.log('Doing reset');
-      job.depReset();
-
-      try {
-        input_data = JSON.parse(input.contents);
-      } catch (e) {
-        return done(`Error parsing ${input.relative}: ${e}`);
-      }
-
-      let { output, inputs } = input_data;
-      if (!output) {
-        return done('Missing `output` field');
-      }
-      if (!inputs || !inputs.length) {
-        return done('Missing or empty `inputs` field');
-      }
-      user_data.atlas_data = input_data;
-
-      asyncEach(inputs, (name, next) => {
-        job.depAdd(name, function (/*err, f*/) {
-          // Not doing this here, will error generically in doAtlas
-          // if (err) {
-          //   job.error(f, `Missing source file ${name}: ${err}`);
-          // }
-          next();
-        });
-      }, doAtlas);
+    if (!f.contents) {
+      delete user_data.files[f.relative];
     } else {
-      atlas_last_reset = false;
-      job.log('Doing incremental update');
-      // only a dep has changed
-      input_data = user_data.atlas_data;
-
-      // input did not change, no changes to which files we depend on
-      doAtlas();
+      user_data.files[f.relative] = f;
     }
   }
+  let files = Object.values(user_data.files).sort(cmpName);
 
-  function multiout(job, done) {
-    let input = job.getFile();
-    let input_data;
+  // Note: above is equivalent to `let files = job.getFiles()`, since we're not actually caching anything
+
+  let buffer = Buffer.concat(files.map(toContents));
+  job.out({
+    relative: opts.output,
+    contents: buffer,
+  });
+  done();
+}
+
+function concatCached(opts) {
+  return concatCachedInternal.bind(null, opts);
+}
+
+function atlas(job, done) {
+  let input = job.getFile();
+  let user_data = job.getUserData();
+  let input_data;
+
+  function doAtlas() {
+    let updated_files = job.getFilesUpdated();
+    user_data.files = user_data.files || {};
+
+    for (let ii = 0; ii < updated_files.length; ++ii) {
+      let f = updated_files[ii];
+      if (f === input) {
+        continue;
+      }
+      if (!f.contents) {
+        if (f.relative.indexOf('expected_missing') === -1) {
+          job.error(`Missing source file ${f.relative}: ${f.err}`);
+        }
+        delete user_data.files[f.relative];
+        continue;
+      }
+      if (f.contents.toString().indexOf('warn') !== -1) {
+        job.warn(f, `Warning on ${f.relative}`);
+      }
+      if (f.contents.toString().indexOf('error') !== -1) {
+        job.error(f, `Error on ${f.relative}`);
+      }
+      user_data.files[f.relative] = f;
+    }
+    let files = Object.values(user_data.files).sort(cmpName);
+
+    let buffer = Buffer.concat(files.map(toContents));
+    job.out({
+      relative: input_data.output,
+      contents: buffer,
+    });
+    done();
+  }
+
+  if (job.isFileUpdated(input)) {
+    atlas_last_reset = true;
+    job.log('Doing reset');
+    job.depReset();
+
     try {
       input_data = JSON.parse(input.contents);
     } catch (e) {
       return done(`Error parsing ${input.relative}: ${e}`);
     }
 
-    let { outputs } = input_data;
-    if (!outputs) {
+    let { output, inputs } = input_data;
+    if (!output) {
       return done('Missing `output` field');
     }
+    if (!inputs || !inputs.length) {
+      return done('Missing or empty `inputs` field');
+    }
+    user_data.atlas_data = input_data;
 
-    for (let key in outputs) {
-      job.out({
-        relative: key,
-        contents: outputs[key],
+    asyncEach(inputs, (name, next) => {
+      job.depAdd(name, function (/*err, f*/) {
+        // Not doing this here, will error generically in doAtlas
+        // if (err) {
+        //   job.error(f, `Missing source file ${name}: ${err}`);
+        // }
+        next();
       });
+    }, doAtlas);
+  } else {
+    atlas_last_reset = false;
+    job.log('Doing incremental update');
+    // only a dep has changed
+    input_data = user_data.atlas_data;
+
+    // input did not change, no changes to which files we depend on
+    doAtlas();
+  }
+}
+
+function multiout(job, done) {
+  let input = job.getFile();
+  let input_data;
+  try {
+    input_data = JSON.parse(input.contents);
+  } catch (e) {
+    return done(`Error parsing ${input.relative}: ${e}`);
+  }
+
+  let { outputs } = input_data;
+  if (!outputs) {
+    return done('Missing `output` field');
+  }
+
+  for (let key in outputs) {
+    job.out({
+      relative: key,
+      contents: outputs[key],
+    });
+  }
+  done();
+}
+
+function warnOn(file) {
+  return function (job, done) {
+    if (job.getFile().relative === file) {
+      job.warn(`(expected warning on ${file})`);
     }
     done();
-  }
+  };
+}
 
-  function warnOn(file) {
-    return function (job, done) {
-      if (job.getFile().relative === file) {
-        job.warn(`(expected warning on ${file})`);
-      }
-      done();
-    };
-  }
+function errorOn(file) {
+  return function (job, done) {
+    if (job.getFile().relative === file) {
+      // done(err) should also do the same
+      job.error(`(expected error on ${file})`);
+    }
+    done();
+  };
+}
 
-  function errorOn(file) {
-    return function (job, done) {
-      if (job.getFile().relative === file) {
-        // done(err) should also do the same
-        job.error(`(expected error on ${file})`);
-      }
-      done();
-    };
-  }
+exports.registerTasks = function () {
+  configure();
 
   gb.task({
     name: 'copy',
