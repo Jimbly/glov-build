@@ -130,7 +130,10 @@ module.exports = {
         },
         "MemberExpression": "off",
         "ObjectExpression": 1, // "first",
-        "SwitchCase": 1
+        "SwitchCase": 1,
+        "flatTernaryExpressions": true, // JE
+        // JE: ignore inconsistent application to ternaries in object properties / function parameters:
+        "ignoredNodes": ["ObjectExpression > Property > ConditionalExpression", "CallExpression > ConditionalExpression"],
       }
     ],
     "indent-legacy": "off",
