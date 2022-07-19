@@ -274,6 +274,9 @@ function multiTest(opts, list) {
 }
 
 function doTestList(list, next) {
+  if (gb.isFork()) {
+    return;
+  }
   function onExit() {
     assert(false, 'Process exited before all tests finished');
   }

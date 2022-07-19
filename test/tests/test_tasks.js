@@ -22,6 +22,8 @@ exports.atlasLastNotReset = function () {
   assert(!atlas_last_reset);
 };
 
+exports.async_value = gb.ASYNC_FORK;
+
 let did_run;
 exports.didRun = function didRun() {
   assert(did_run);
@@ -314,6 +316,7 @@ exports.registerTasks = function () {
     input: 'atlas/*.json',
     type: gb.SINGLE,
     target: 'dev',
+    async: exports.async_value,
     func: atlas,
   });
 

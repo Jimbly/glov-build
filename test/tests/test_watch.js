@@ -8,6 +8,33 @@ const {
 doTestList([
   multiTest({ watch: true, serial: true }, [{
     name: 'initial',
+    tasks: ['atlas'],
+    ops: {
+      add: {
+        'atlas/atlas1.json':
+`{
+  "output": "my_atlas.txt",
+  "inputs": [ "txt/file1.txt", "txt/file2.txt"]
+}`,
+        'txt/file1.asc': 'ascii1',
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'my_atlas.txt': 'file1file2',
+      },
+    },
+    results: {
+      checks: [
+        atlasLastReset,
+      ],
+    },
+  }]),
+  /*
+  multiTest({ watch: true, serial: true }, [{
+    name: 'initial',
     tasks: ['default'],
     ops: {
       add: {
@@ -186,7 +213,7 @@ doTestList([
       fs_stat: 7,
     },
   }]),
-
+/*
   // Atlas dynamic reprocessing and caching
   multiTest({ watch: true, serial: true }, [{
     name: 'atlas dynamic reset',
@@ -1290,5 +1317,5 @@ doTestList([
       jobs: 1,
     },
   }]),
-
+*/
 ]);
