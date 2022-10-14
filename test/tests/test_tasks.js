@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { asyncEach } = require('glov-async');
+const { asyncEach, asyncEachSeries } = require('glov-async');
 // const gb = require('glov-build');
 const gb = require('../../');
 const path = require('path');
@@ -266,6 +266,38 @@ function errorOn(file) {
   };
 }
 
+function requireTask(job, done) {
+  function getContentsFor(subfile, cb) {
+    asyncEachSeries([
+      subfile,
+      `${subfile}/index.js`,
+      `${subfile}.js`,
+    ], function (to_check, next) {
+      job.depAdd(to_check, function (err, f) {
+        //console.log(to_check, err, f?.contents?.length);
+        if (!err) {
+          return cb(null, f.contents);
+        }
+        next();
+      });
+    }, function () {
+      cb('File not found');
+    });
+  }
+  let input = job.getFile();
+  let subfile = input.contents.toString();
+  job.depReset();
+  getContentsFor(subfile, function (err, contents) {
+    if (contents) {
+      job.out({
+        relative: input.relative,
+        contents,
+      });
+    }
+    done(err);
+  });
+}
+
 exports.registerTasks = function () {
   configure();
 
@@ -492,6 +524,14 @@ exports.registerTasks = function () {
       job.log('Execish running!');
       done();
     },
+  });
+
+  gb.task({
+    name: 'require',
+    input: 'index.js',
+    type: gb.SINGLE,
+    target: 'dev',
+    func: requireTask,
   });
 
   gb.task({

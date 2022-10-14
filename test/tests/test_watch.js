@@ -1289,4 +1289,44 @@ doTestList([
       jobs: 1,
     },
   }]),
+  multiTest({ watch: true, serial: true }, [{
+    name: 'folder file confusion: init',
+    tasks: ['require'],
+    ops: {
+      add: {
+        'index.js': 'submodule',
+        'submodule/index.js': 'submodule/index.js',
+        'submodule.js': 'submodule.js',
+      }
+    },
+    outputs: {
+      dev: {
+        'index.js': 'submodule/index.js',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 1,
+    },
+  }, {
+    name: 'folder file confusion: remap',
+    tasks: ['require'],
+    ops: {
+      add: {
+        'submodule/foo.js': 'submodule/foo.js',
+      },
+      del: [
+        'submodule/index.js',
+      ],
+    },
+    outputs: {
+      dev: {
+        'index.js': 'submodule.js',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 1,
+    },
+  }]),
 ]);
