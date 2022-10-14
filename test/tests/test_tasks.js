@@ -22,7 +22,7 @@ exports.atlasLastNotReset = function () {
   assert(!atlas_last_reset);
 };
 
-exports.async_value = gb.ASYNC_FORK;
+exports.async_value = gb.ASYNC_DEFAULT;
 
 let did_run;
 exports.didRun = function didRun() {
