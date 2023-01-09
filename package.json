@@ -17,6 +17,7 @@
     "test": "nodemon test/tests/test_watch.js",
     "test_async": "nodemon test/tests/test_async.js",
     "test_raw_async": "nodemon test/tests/raw_async.js",
+    "test_raw_slow_write": "nodemon test/tests/raw_slow_write.js",
     "test_async_fork": "nodemon test/tests/test_async_fork.js",
     "test_delays": "nodemon test/tests/test_delays.js",
     "test_taskmod": "nodemon test/tests/test_taskmod.js",
