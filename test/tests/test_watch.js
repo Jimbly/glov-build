@@ -1329,4 +1329,47 @@ doTestList([
       jobs: 1,
     },
   }]),
+
+  multiTest({ watch: true }, [{
+    name: 'delete after error: init',
+    tasks: ['copy'],
+    stat_error_on: [
+      'txt/file1.txt',
+    ],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 0,
+      run_should_error: true,
+    },
+  }, {
+    name: 'delete after error: delete',
+    tasks: ['copy'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+      },
+      del: [
+        'txt/file2.txt',
+      ]
+    },
+    outputs: {
+      dev: {
+        'txt/file1.txt': 'file1',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 1,
+    },
+  }]),
 ]);

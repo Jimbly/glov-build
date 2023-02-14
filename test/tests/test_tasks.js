@@ -410,6 +410,15 @@ exports.registerTasks = function () {
   });
 
   gb.task({
+    name: 'maybe_runs',
+    input: 'txt/*.txt',
+    type: gb.SINGLE,
+    func: copy,
+    target: 'dev',
+    deps: ['errors'],
+  });
+
+  gb.task({
     name: 'output_filename',
     input: '**',
     type: gb.SINGLE,

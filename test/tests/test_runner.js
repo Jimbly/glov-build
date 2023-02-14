@@ -88,10 +88,43 @@ function testUpdateFS(name, ops) {
   }
 }
 
+let stat_error_files;
+let stat_orig;
+function statReplacement(filename, callback) {
+  stat_orig(filename, function (err, stats) {
+    console.log(filename, stat_error_files);
+    if (stat_error_files[filename]) {
+      err = new Error('TestError');
+      stats = undefined;
+    }
+    callback(err, stats);
+  });
+}
+let stat_error_registered = false;
+function statErrorOn(list) {
+  if (!list || !list.length) {
+    if (stat_error_registered) {
+      fs.stat = stat_orig;
+      stat_error_registered = false;
+    }
+    return;
+  }
+  if (!stat_error_registered) {
+    stat_orig = fs.stat.bind(fs);
+    fs.stat = statReplacement;
+    stat_error_registered = true;
+  }
+  stat_error_files = {};
+  for (let ii = 0; ii < list.length; ++ii) {
+    stat_error_files[forwardSlashes(path.join(WORK_DIR, list[ii]))] = true;
+  }
+}
+
 function test(multi_opts, opts, next) {
   let { watch } = multi_opts;
   let {
     tasks, ops, outputs, name, results, results_abort, phase_delays,
+    stat_error_on,
   } = opts;
 
   let left = 2;
@@ -106,11 +139,13 @@ function test(multi_opts, opts, next) {
     // TODO: catch if this fails, re-register 'done' and wait 1 second before
     //   timing out and trying again without a try/catch?
     testLog(name, 'Success');
+    statErrorOn();
     next();
   }
 
   function init(next) {
     testLog(name, 'Initializing...');
+    statErrorOn(stat_error_on);
     setTimeout(() => {
       testUpdateFS(name, ops || {});
       next();
@@ -158,6 +193,7 @@ function test(multi_opts, opts, next) {
     let {
       checks, errors,
       fs_read, fs_write, fs_stat, fs_delete,
+      run_should_error,
     } = results;
     if (fs_read !== undefined) {
       assert.equal(gb.files.stats.read, fs_read || 0, 'Unexpected number of fs.read');
@@ -172,7 +208,7 @@ function test(multi_opts, opts, next) {
       assert.equal(gb.files.stats.delete, fs_delete || 0, 'Unexpected number of fs.delete');
     }
 
-    if (errors) {
+    if (errors || run_should_error) {
       assert(err, 'Expected build to end in error');
     } else {
       assert(!err || err.indexOf('spurious') !== -1, 'Expected build to end without error');
