@@ -329,18 +329,18 @@ exports.registerTasks = function () {
   });
 
   gb.task({
-    name: 'reverse',
-    input: 'txt/*.txt',
-    type: gb.SINGLE,
-    func: reverse,
-  });
-
-  gb.task({
     name: 'concat-reverse',
     input: 'reverse:**',
     type: gb.ALL,
     target: 'dev',
     func: concatCached({ output: 'concat-reverse.txt' }),
+  });
+
+  gb.task({
+    name: 'reverse',
+    input: 'txt/*.txt',
+    type: gb.SINGLE,
+    func: reverse,
   });
 
   gb.task({
