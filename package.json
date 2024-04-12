@@ -1,6 +1,6 @@
 {
   "name": "glov-build",
-  "version": "1.0.43",
+  "version": "1.0.44",
   "description": "GLOV.js Build System",
   "main": "index.js",
   "keywords": [
