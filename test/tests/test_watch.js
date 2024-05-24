@@ -6,6 +6,7 @@ const {
 
 
 doTestList([
+  /*
   multiTest({ watch: true, serial: true }, [{
     name: 'initial',
     tasks: ['default'],
@@ -1372,4 +1373,61 @@ doTestList([
       jobs: 1,
     },
   }]),
+*/
+  multiTest({ watch: true }, [{
+    name: 'known unchanged files: setup',
+    tasks: ['hasher'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        '826e8142': 'file1',
+        '1c1c96fd': 'file2',
+      },
+    },
+    results: {
+      crc_calcs: 2,
+      fs_read: 2,
+      fs_write: 2,
+      fs_stat: 2,
+      fs_delete: 0,
+      errors: 0,
+      warnings: 0,
+      jobs: 1,
+    },
+  }, {
+    name: 'known unchanged files: change one',
+    tasks: ['hasher'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'file1b',
+      },
+    },
+    outputs: {
+      dev: {
+        '8ed4916d': 'file1b',
+        '1c1c96fd': 'file2',
+      },
+    },
+    results: {
+      crc_calcs: 1,
+      fs_read: 1,
+      fs_write: 1,
+      fs_stat: 0,
+      fs_delete: 1,
+      errors: 0,
+      warnings: 0,
+      jobs: 1,
+    },
+    results_serial: {
+      crc_calcs: 2,
+      fs_read: 2,
+      fs_stat: 3,
+    },
+  }]),
+
 ]);

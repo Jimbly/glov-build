@@ -3,6 +3,7 @@ const { asyncEach, asyncEachSeries } = require('glov-async');
 // const gb = require('glov-build');
 const gb = require('../../');
 const path = require('path');
+const crypto = require('crypto');
 
 const targets = {
   dev: path.join(__dirname, '../out/test1/dev'),
@@ -298,6 +299,37 @@ function requireTask(job, done) {
   });
 }
 
+function hasherTest() {
+  let cache = {};
+  function hasher(job, done) {
+    let files = job.getFiles();
+    files.forEach(function (file) {
+      let hashed;
+      let is_unchanged;
+      if (cache[file.relative] && cache[file.relative].timestamp === file.timestamp) {
+        hashed = cache[file.relative].hashed;
+        is_unchanged = true;
+      } else {
+        hashed = crypto.createHash('md5').update(file.contents).digest('hex').slice(0, 8);
+        cache[file.relative] = {
+          timestamp: file.timestamp,
+          hashed,
+        };
+      }
+      job.out({
+        relative: hashed,
+        contents: file.contents,
+        is_unchanged,
+      });
+    });
+    done();
+  }
+  return {
+    type: gb.ALL,
+    func: hasher,
+  };
+}
+
 exports.registerTasks = function () {
   configure();
 
@@ -520,6 +552,13 @@ exports.registerTasks = function () {
     type: gb.SINGLE,
     target: 'dev',
     func: requireTask,
+  });
+
+  gb.task({
+    name: 'hasher',
+    input: 'txt/*.txt',
+    target: 'dev',
+    ...hasherTest(),
   });
 
   gb.task({

@@ -154,7 +154,7 @@ function test(multi_opts, opts, next) {
 
   function checkResultsSub(label, stats, result_set) {
     let {
-      warnings, errors, jobs, files_updated, files_deleted, phase_inputs, phase_deps, phase_run,
+      warnings, errors, jobs, files_updated, files_deleted, phase_inputs, phase_deps, phase_run, crc_calcs,
     } = result_set;
     assert.equal(stats.jobs, jobs || 0, `${label}Unexpected number of jobs ran`);
     assert.equal(stats.errors, errors || 0, `${label}Unexpected number of errors`);
@@ -173,6 +173,9 @@ function test(multi_opts, opts, next) {
     }
     if (phase_run !== undefined) {
       assert.equal(stats.phase_run, phase_run || 0, `${label}Unexpected number of phase_run`);
+    }
+    if (crc_calcs !== undefined) {
+      assert.equal(stats.crc_calcs, crc_calcs || 0, 'Unexpected number of crc_calcs');
     }
   }
 
