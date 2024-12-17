@@ -10,7 +10,7 @@
   "author": "Jimb Esser (https://github.com/Jimbly)",
   "repository": {
     "type": "git",
-    "url": "git@github.com:Jimbly/glov-build.git"
+    "url": "git+https://github.com/Jimbly/glov-build.git"
   },
   "license": "MIT",
   "scripts": {
