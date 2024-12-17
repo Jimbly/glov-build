@@ -6,7 +6,6 @@ const {
 
 
 doTestList([
-  /*
   multiTest({ watch: true, serial: true }, [{
     name: 'initial',
     tasks: ['default'],
@@ -1225,7 +1224,7 @@ doTestList([
       dev: {
         'file1.txt': 'file1',
         'file2.txt': 'file2',
-        'file3.txt': 'file3a', // not guaranteed? not important for what we're testing, though # of jobs ran will change
+        'file3.txt': '*', // 'file3a' or 'file3b'
       },
     },
     results: {
@@ -1373,7 +1372,7 @@ doTestList([
       jobs: 1,
     },
   }]),
-*/
+
   multiTest({ watch: true }, [{
     name: 'known unchanged files: setup',
     tasks: ['hasher'],

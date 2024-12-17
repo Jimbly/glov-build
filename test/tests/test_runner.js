@@ -232,7 +232,9 @@ function test(multi_opts, opts, next) {
         let key = forwardSlashes(path.relative(target_dir, full_path));
         assert(target_output[key] !== undefined, `Found unexpected ${target}:${key}`);
         let found = fs.readFileSync(full_path, 'utf8');
-        assert.equal(found, target_output[key], `Mismatched data in ${target}:${key}`);
+        if (target_output[key] !== '*') {
+          assert.equal(found, target_output[key], `Mismatched data in ${target}:${key}`);
+        }
         found_keys[key] = true;
       }
       for (let key in target_output) {
