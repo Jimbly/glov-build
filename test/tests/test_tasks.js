@@ -511,6 +511,13 @@ exports.registerTasks = function () {
     func: copy,
   });
   gb.task({
+    name: 'from_meta_early',
+    input: 'meta:**',
+    target: 'dev',
+    type: gb.SINGLE,
+    func: copy,
+  });
+  gb.task({
     name: 'meta',
     deps: ['simple1', 'simple2'],
   });
