@@ -725,6 +725,29 @@ doTestList([
     },
   }]),
 
+  multiTest({ serial: true, watch: true }, [{
+    name: 'meta task from other meta task',
+    tasks: ['from_meta2'],
+    ops: {
+      add: {
+        'file1': 'file1',
+        'file2': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1': 'file1',
+        'file2': 'file2',
+      },
+    },
+    results: {
+      fs_read: 2,
+      fs_write: 4,
+      fs_stat: 2,
+      jobs: 4,
+    },
+  }]),
+
   // Test for loader returning ERR_DOES_NOT_EXIST when file.err should have been cleared
   multiTest({ watch: true, serial: true }, [{
     name: 'removing file: initial',
