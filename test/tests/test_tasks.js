@@ -49,11 +49,18 @@ function copy(job, done) {
 
 function copyToRoot(job, done) {
   let file = job.getFile();
-  job.out({
-    relative: path.basename(file.relative),
-    contents: file.contents,
-  });
-  done();
+  function doit() {
+    job.out({
+      relative: path.basename(file.relative),
+      contents: file.contents,
+    });
+    done();
+  }
+  if (file.contents.toString().includes('delayed')) {
+    setImmediate(doit);
+  } else {
+    doit();
+  }
 }
 
 function copyAll2(job, done) {

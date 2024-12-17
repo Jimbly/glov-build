@@ -6,6 +6,7 @@ const {
 
 
 doTestList([
+
   multiTest({ watch: true, serial: true }, [{
     name: 'initial',
     tasks: ['default'],
@@ -1240,14 +1241,14 @@ doTestList([
     ops: {
       add: {
         'dir1/file3.txt': 'file3a',
-        'dir2/file3.txt': 'file3b',
+        'dir2/file3.txt': 'file3b-delayed',
       }
     },
     outputs: {
       dev: {
         'file1.txt': 'file1',
         'file2.txt': 'file2',
-        'file3.txt': '*', // 'file3a' or 'file3b'
+        'file3.txt': 'file3a',
       },
     },
     results: {
@@ -1255,7 +1256,7 @@ doTestList([
       jobs: 2,
     },
   }, {
-    name: 'copy to root: remove duplicate',
+    name: 'copy to root: remove duplicate, keep second',
     tasks: ['copy_to_root'],
     ops: {
       del: [
@@ -1266,12 +1267,68 @@ doTestList([
       dev: {
         'file1.txt': 'file1',
         'file2.txt': 'file2',
-        'file3.txt': 'file3b',
+        'file3.txt': 'file3b-delayed',
       },
     },
     results: {
       errors: 0,
       jobs: 1,
+    },
+  }, {
+    name: 'copy to root: cleanup',
+    tasks: ['copy_to_root'],
+    ops: {
+      del: [
+        'dir2/file3.txt',
+      ],
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+      },
+    },
+    results: {
+      errors: 0,
+    },
+  }, {
+    name: 'copy to root: new duplicate',
+    tasks: ['copy_to_root'],
+    ops: {
+      add: {
+        'dir1/file3.txt': 'file3a',
+        'dir2/file3.txt': 'file3b-delayed',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+        'file3.txt': 'file3a',
+      },
+    },
+    results: {
+      errors: 1,
+      jobs: 2,
+    },
+  }, {
+    name: 'copy to root: remove duplicate, keep first',
+    tasks: ['copy_to_root'],
+    ops: {
+      del: [
+        'dir2/file3.txt',
+      ],
+    },
+    outputs: {
+      dev: {
+        'file1.txt': 'file1',
+        'file2.txt': 'file2',
+        'file3.txt': 'file3a',
+      },
+    },
+    results: {
+      errors: 0,
+      jobs: 0,
     },
   }, {
     name: 'copy to root: incremental duplicate',
@@ -1285,7 +1342,7 @@ doTestList([
       dev: {
         'file1.txt': 'file1',
         'file2.txt': 'file2',
-        'file3.txt': 'file3b',
+        'file3.txt': 'file3a',
       },
     },
     results: {
@@ -1304,7 +1361,7 @@ doTestList([
       dev: {
         'file1.txt': 'file1b',
         'file2.txt': 'file2',
-        'file3.txt': 'file3b',
+        'file3.txt': 'file3a',
       },
     },
     results: {
@@ -1312,6 +1369,7 @@ doTestList([
       jobs: 1,
     },
   }]),
+
   multiTest({ watch: true, serial: true }, [{
     name: 'folder file confusion: init',
     tasks: ['require'],
