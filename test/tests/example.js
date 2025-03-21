@@ -1,3 +1,4 @@
+/* eslint-disable func-name-matching */
 const gb = require('../../');
 
 gb.configure({
