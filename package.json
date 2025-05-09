@@ -36,7 +36,8 @@
     "micromatch": "^4.0.2",
     "minimist": "^1.2.5",
     "recursive-readdir": "^2.2.2",
-    "time-stamp": "^2.2.0"
+    "time-stamp": "^2.2.0",
+    "xxhash-wasm": "^1.1.0"
   },
   "devDependencies": {
     "fs-ext": "^2.0.0",
