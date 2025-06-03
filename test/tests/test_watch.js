@@ -1532,5 +1532,44 @@ doTestList([
       fs_stat: 3,
     },
   }]),
-
+  multiTest({ watch: true }, [{ // Note: error doesn't happen in serial runs
+    name: 'depAdd from source',
+    tasks: ['concat', 'require'],
+    ops: {
+      add: {
+        'index.js': 'txt/file2.txt',
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'file1file2',
+        'index.js': 'file2',
+      },
+    },
+    results: {
+      jobs: 2,
+    },
+  }, {
+    name: 'depAdd from non-dep task',
+    tasks: ['require'],
+    ops: {
+      add: {
+        'index.js': 'dev:concat.txt',
+        'txt/file1.txt': 'file1',
+        'txt/file2.txt': 'file2',
+      }
+    },
+    outputs: {
+      dev: {
+        'concat.txt': 'file1file2',
+        'index.js': 'file1file2',
+      },
+    },
+    results: {
+      jobs: 1,
+      errors: 1,
+    },
+  }]),
 ]);
