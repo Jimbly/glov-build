@@ -1532,6 +1532,7 @@ doTestList([
       fs_stat: 3,
     },
   }]),
+
   multiTest({ watch: true }, [{ // Note: error doesn't happen in serial runs
     name: 'depAdd from source',
     tasks: ['concat', 'require'],
@@ -1570,6 +1571,58 @@ doTestList([
     results: {
       jobs: 1,
       errors: 1,
+    },
+  }]),
+
+  multiTest({ watch: true, serial: true }, [{
+    name: 'single source file1',
+    tasks: ['autoaudio'],
+    ops: {
+      add: {
+        'file1.mp3': 'mp3source1',
+        'file2.mp3': 'mp3source2',
+        'file2.ogg': 'oggsource2',
+        'file3.ogg': 'oggsource3',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1.mp3': 'mp3source1',
+        'file1.ogg': 'generatedogg',
+        'file2.mp3': 'mp3source2',
+        'file2.ogg': 'oggsource2',
+        'file3.mp3': 'generatedmp3',
+        'file3.ogg': 'oggsource3',
+      },
+    },
+    results: {
+      jobs: 4,
+    },
+  }, {
+    name: 'new file1 source',
+    tasks: ['autoaudio'],
+    ops: {
+      add: {
+        'file1.ogg': 'oggsource1',
+        'file3.mp3': 'mp3source3',
+      }
+    },
+    outputs: {
+      dev: {
+        'file1.mp3': 'mp3source1',
+        'file1.ogg': 'oggsource1',
+        'file2.mp3': 'mp3source2',
+        'file2.ogg': 'oggsource2',
+        'file3.mp3': 'mp3source3',
+        'file3.ogg': 'oggsource3',
+      },
+    },
+    results: {
+      jobs: 4,
+      warnings: 1, // maybe order dependent?
+    },
+    results_watch: {
+      warnings: 0,
     },
   }]),
 ]);

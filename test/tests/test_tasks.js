@@ -337,6 +337,24 @@ function hasherTest() {
   };
 }
 
+function autoAudio(job, done) {
+  // "generate" an MP3 or Ogg if it doesn't exist in the source, just copies if both exist
+  let file = job.getFile();
+  let ext = path.extname(file.relative);
+  let fn = path.basename(file.relative).slice(0, -ext.length);
+  job.out(file);
+  let other = ext === '.mp3' ? 'ogg' : 'mp3';
+  job.depAdd(`${fn}.${other}`, function (err, oggfile) {
+    if (err) {
+      job.out({
+        relative: `${fn}.${other}`,
+        contents: `generated${other}`,
+      });
+    }
+    done();
+  });
+}
+
 exports.registerTasks = function () {
   configure();
 
@@ -586,6 +604,14 @@ exports.registerTasks = function () {
     input: 'txt/*.txt',
     target: 'dev',
     ...hasherTest(),
+  });
+
+  gb.task({
+    name: 'autoaudio',
+    input: ['*.mp3', '*.ogg'],
+    type: gb.SINGLE,
+    target: 'dev',
+    func: autoAudio,
   });
 
   gb.task({
