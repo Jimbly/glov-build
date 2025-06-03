@@ -1,4 +1,5 @@
 // const gb = require('glov-build');
+const assert = require('assert');
 const gb = require('../../');
 const { doTestList, multiTest } = require('./test_runner.js');
 const {
@@ -44,6 +45,42 @@ function registerTwoStep() {
   gb.task({
     name: 'copy2',
     input: 'copy1:**.txt',
+    type: gb.SINGLE,
+    target: 'dev',
+    func: copy,
+  });
+}
+
+function registerJSLoadsMap() {
+  configure();
+
+  gb.task({
+    name: 'copy1',
+    input: '*.js',
+    type: gb.SINGLE,
+    target: 'dev',
+    func: function (job, done) {
+      let file = job.getFile();
+      job.out(file);
+      let mapfile = `${file.relative}.map`;
+      job.depAdd(mapfile, function (err, file) {
+        assert(!err);
+        job.out({
+          relative: mapfile,
+          contents: file.contents,
+        });
+        done();
+      });
+    },
+  });
+}
+
+function registerJSMapSeparate() {
+  configure();
+
+  gb.task({
+    name: 'copy1',
+    input: ['*.js', '*.map'],
     type: gb.SINGLE,
     target: 'dev',
     func: copy,
@@ -193,6 +230,55 @@ doTestList([
       fs_write: 2,
       fs_stat: 4,
       fs_delete: 0,
+      jobs: 2,
+    },
+  }]),
+
+  multiTest(opts, [{
+    name: 'split from 1 source',
+    tasks: ['copy1'],
+    register: registerJSLoadsMap,
+    ops: {
+      add: {
+        'index.js': 'jsfile',
+        'index.js.map': 'mapfile',
+      }
+    },
+    outputs: {
+      dev: {
+        'index.js': 'jsfile',
+        'index.js.map': 'mapfile',
+      },
+    },
+    results: {
+      fs_read: 2,
+      fs_write: 2,
+      fs_stat: 2,
+      fs_delete: 0,
+      jobs: 1,
+    },
+  }, {
+    name: 'change to copy individually',
+    tasks: ['copy1'],
+    register: registerJSMapSeparate,
+    ops: {
+      add: {
+        'index.js': 'jsfile2',
+        'index.js.map': 'mapfile2',
+      }
+    },
+    outputs: {
+      dev: {
+        'index.js': 'jsfile2',
+        'index.js.map': 'mapfile2',
+      },
+    },
+    results: {
+      fs_read: 2,
+      fs_write: 2,
+      fs_stat: 2,
+      fs_delete: 0, // maybe 1 if jobs run in other order?
+      warnings: 1,
       jobs: 2,
     },
   }]),
