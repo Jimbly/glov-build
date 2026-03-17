@@ -14,6 +14,7 @@
   },
   "license": "MIT",
   "scripts": {
+    "test_for_ci": "node test/ci.js",
     "test": "nodemon test/tests/test_watch.js",
     "test_async": "nodemon test/tests/test_async.js",
     "test_raw_async": "nodemon test/tests/raw_async.js",
