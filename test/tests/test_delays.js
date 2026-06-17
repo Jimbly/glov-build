@@ -45,6 +45,28 @@ function testDelaysRegister() {
     target: 'dev',
     func: copy,
   });
+
+  gb.task({
+    name: 'slow_copy_to_dev',
+    input: 'txt/*.txt',
+    target: 'dev',
+    type: gb.SINGLE,
+    func: copySlow,
+  });
+  gb.task({
+    name: 'gather',
+    input: 'slow_copy_to_dev:**',
+    type: gb.ALL,
+    target: 'dev',
+    func: function (job, done) {
+      let file_names = job.getFiles().map((a) => a.relative);
+      job.out({
+        relative: 'list.txt',
+        contents: file_names.join('\n'),
+      });
+      done();
+    }
+  });
 }
 
 doTestList([
@@ -300,6 +322,57 @@ doTestList([
     outputs: {
       dev: {
         'txt/file2.txt': 'file2',
+      },
+    },
+    results: {
+      jobs: 3,
+    },
+    results_abort: {
+      jobs: 1,
+    },
+  }]),
+
+  // rename while running, with a later gather, bug only happened when first was also outputting to dev
+  multiTest({ watch: true, register: testDelaysRegister }, [{
+    name: 'rename abort: init and good run',
+    tasks: ['gather'],
+    ops: {
+      add: {
+        'txt/file1.txt': 'contents',
+      },
+    },
+    outputs: {
+      dev: {
+        'list.txt': 'txt/file1.txt',
+        'txt/file1.txt': 'contents',
+      },
+    },
+    results: {
+      jobs: 2,
+    },
+  }, {
+    name: 'rename abort: copy and rename',
+    tasks: ['gather'],
+    ops: {
+      add: {
+        'txt/file1 - Copy.txt': 'contents',
+      },
+      delayed: {
+        125: {
+          del: [
+            'txt/file1 - Copy.txt'
+          ],
+          add: {
+            'txt/file2.txt': 'contents',
+          },
+        },
+      },
+    },
+    outputs: {
+      dev: {
+        'list.txt': 'txt/file1.txt\ntxt/file2.txt',
+        'txt/file1.txt': 'contents',
+        'txt/file2.txt': 'contents',
       },
     },
     results: {
